@@ -1,0 +1,6 @@
+Code,Description,MaxBundleComponents,MinBundleComponents,Name,ParentGroup.Code,ParentProduct.StockKeepingUnit,Sequence
+WTR-PCG-BATTERIES,,99,0,Batterien,,WTR-DUO-END,5
+WTR-PCG-PADS,,99,0,Pads,,WTR-DUO-END,10
+WTR-PCG-BRUSHES,,99,0,Buersten,,WTR-DUO-END,20
+WTR-PCG-SQUEEGEES,,99,0,Sauglippen,,WTR-DUO-END,30
+WTR-PCG-ACCESSORIES,,99,0,Zubehoer,,WTR-DUO-END,40

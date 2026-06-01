@@ -1,0 +1,2 @@
+BasedOn.Code,CanRamp,ConfigureDuringSale,Description,DisplayUrl,Family,IsActive,IsAssetizable,IsSoldOnlyWithOtherProds,Name,ProductCode,QuantityUnitOfMeasure,SpecificationType,StockKeepingUnit,Type,UnitOfMeasure.UnitCode
+WTR-PC-END,false,Allowed,,/resource/wetrok_duomatic_50379_1,Cleaning Machines,true,true,false,Wetrok Duomatic Endurer,WTR-DUO-END,,,WTR-DUO-END,Bundle,

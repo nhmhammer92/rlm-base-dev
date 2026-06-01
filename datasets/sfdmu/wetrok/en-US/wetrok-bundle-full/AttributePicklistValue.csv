@@ -1,0 +1,5 @@
+Abbreviation,Code,DisplayValue,IsDefault,Name,Picklist.Name,Sequence,Status,Value
+,WTR-FL-3000,3.000 m2/h,true,3.000 m2/h,Wetrok Flaechenleistung Picklist,1,Active,3.000 m2/h
+,WTR-FL-3750,3.750 m2/h,false,3.750 m2/h,Wetrok Flaechenleistung Picklist,2,Active,3.750 m2/h
+,WTR-AB-60,60 cm,true,60 cm,Wetrok Arbeitsbreite Picklist,1,Active,60 cm
+,WTR-AB-75,75 cm,false,75 cm,Wetrok Arbeitsbreite Picklist,2,Active,75 cm

@@ -1,0 +1,2 @@
+BasedOn.Code,CanRamp,ConfigureDuringSale,Description,DisplayUrl,Family,IsActive,IsAssetizable,IsSoldOnlyWithOtherProds,Name,ProductCode,QuantityUnitOfMeasure,SpecificationType,StockKeepingUnit,Type,UnitOfMeasure.UnitCode
+WTR-PC-END,false,Allowed,,/resource/RLM_quantumBit_logo_sq,Cleaning Machines,true,true,false,Wetrok Duomatic Endurer,WTR-DUO-END,,,WTR-DUO-END,,

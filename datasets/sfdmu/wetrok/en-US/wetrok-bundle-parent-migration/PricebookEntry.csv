@@ -1,0 +1,3 @@
+$$Product2.StockKeepingUnit$ProductSellingModel.Name$CurrencyIsoCode,CurrencyIsoCode,IsActive,IsDerived,Name,Pricebook2.$$Name$IsStandard,Product2.StockKeepingUnit,ProductSellingModel.$$Name$SellingModelType,UnitPrice
+WTR-DUO-END-BDL;One-Time;CHF,CHF,true,false,Wetrok Duomatic Endurer Bundle,Standard Price Book;true,WTR-DUO-END-BDL,One-Time;OneTime,8500
+WTR-DUO-END-BDL;One-Time;USD,USD,true,false,Wetrok Duomatic Endurer Bundle,Standard Price Book;true,WTR-DUO-END-BDL,One-Time;OneTime,9200

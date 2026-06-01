@@ -1,0 +1,3 @@
+Code,DataType,DefaultHelpText,DefaultValue,Description,DeveloperName,IsActive,IsRequired,Label,Name,Picklist.Name,SourceSystemIdentifier,UnitOfMeasure.UnitCode,ValueDescription
+WTR-ATTR-BATTERY-TYPE,Picklist,,Gel Battery,,Battery_Type,true,true,Battery Type,Battery Type,Wetrok Battery Type Picklist,,,
+WTR-ATTR-DRIVE-SYSTEM,Picklist,,Standard,,Drive_System,true,false,Drive System,Drive System,Wetrok Drive System Picklist,,,

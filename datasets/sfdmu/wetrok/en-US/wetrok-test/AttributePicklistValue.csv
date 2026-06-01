@@ -1,0 +1,5 @@
+Abbreviation,Code,DisplayValue,IsDefault,Name,Picklist.Name,Sequence,Status,Value
+,WTR-BATT-GEL,Gel Battery,true,Gel Battery,Wetrok Battery Type Picklist,1,Active,Gel Battery
+,WTR-BATT-LI,Lithium-Ion,false,Lithium-Ion,Wetrok Battery Type Picklist,2,Active,Lithium-Ion
+,WTR-DRIVE-STD,Standard,true,Standard,Wetrok Drive System Picklist,1,Active,Standard
+,WTR-DRIVE-AWD,All-Wheel Drive,false,All-Wheel Drive,Wetrok Drive System Picklist,2,Active,All-Wheel Drive

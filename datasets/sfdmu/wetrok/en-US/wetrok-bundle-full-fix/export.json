@@ -1,0 +1,32 @@
+{
+  "objects": [
+    {
+      "query": "SELECT BasedOnId, CanRamp, ConfigureDuringSale, Description, DisplayUrl, Family, Id, IsActive, IsAssetizable, IsSoldOnlyWithOtherProds, Name, ProductCode, QuantityUnitOfMeasure, SpecificationType, StockKeepingUnit, Type, UnitOfMeasureId FROM Product2 ORDER BY StockKeepingUnit ASC",
+      "operation": "Upsert",
+      "externalId": "StockKeepingUnit"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, AttributeNameOverride, DefaultValue, Description, DisplayType, HelpText, Id, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, MaximumCharacterCount, MaximumValue, MinimumCharacterCount, MinimumValue, Name, ProductClassificationId, Sequence, Status, StepValue, UnitOfMeasureId, ValueDescription FROM ProductClassificationAttr ORDER BY ProductClassification.Code ASC, AttributeDefinition.Code ASC, AttributeCategory.Code ASC, Name ASC",
+      "operation": "Upsert",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, AttributeNameOverride, DefaultValue, Description, DisplayType, HelpText, Id, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, MaximumCharacterCount, MaximumValue, MinimumCharacterCount, MinimumValue, Name, OverriddenProductAttributeDefinitionId, Product2Id, ProductClassificationAttributeId, Sequence, Status, StepValue, UnitOfMeasureId, ValueDescription, Product2.StockKeepingUnit, AttributeCategory.Code, AttributeDefinition.Code, ProductClassificationAttribute.Name FROM ProductAttributeDefinition ORDER BY Product2.StockKeepingUnit ASC, AttributeCategory.Code ASC, AttributeDefinition.Code ASC, ProductClassificationAttribute.Name ASC",
+      "operation": "Upsert",
+      "externalId": "AttributeDefinition.Code;Product2.StockKeepingUnit"
+    },
+    {
+      "query": "SELECT Code, Description, Id, MaxBundleComponents, MinBundleComponents, Name, ParentGroupId, ParentGroup.Code, ParentGroup.ParentProduct.StockKeepingUnit, ParentProductId, Sequence FROM ProductComponentGroup ORDER BY ParentProduct.StockKeepingUnit ASC, Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT ChildProductClassificationId, ChildProductId, ChildProductRole, ChildSellingModelId, DoesBundlePriceIncludeChild, Id, IsComponentRequired, IsDefaultComponent, IsQuantityEditable, MaxQuantity, MinQuantity, ParentProductId, ParentProductRole, ParentSellingModelId, ProductComponentGroupId, ProductRelationshipTypeId, Quantity, QuantityScaleMethod, QuoteVisibility, Sequence, UnitOfMeasureId, ChildProductClassification.Code, ChildProduct.StockKeepingUnit, ParentProduct.StockKeepingUnit, ProductComponentGroup.Code, ProductRelationshipType.Name FROM ProductRelatedComponent ORDER BY ChildProductClassification.Code ASC, ChildProduct.StockKeepingUnit ASC, ParentProduct.StockKeepingUnit ASC, ProductComponentGroup.Code ASC, ProductRelationshipType.Name ASC",
+      "operation": "Upsert",
+      "externalId": "ChildProductClassification.Code;ChildProduct.StockKeepingUnit;ParentProduct.StockKeepingUnit;ProductComponentGroup.Code;ProductRelationshipType.Name"
+    }
+  ],
+  "apiVersion": "66.0",
+  "excludeIdsFromCSVFiles": "true",
+  "orgs": []
+}

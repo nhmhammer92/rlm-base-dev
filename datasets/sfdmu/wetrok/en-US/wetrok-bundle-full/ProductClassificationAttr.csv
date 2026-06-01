@@ -1,0 +1,3 @@
+AttributeCategory.Code,AttributeDefinition.Code,AttributeNameOverride,DefaultValue,Description,DisplayType,HelpText,IsHidden,IsPriceImpacting,IsReadOnly,IsRequired,MaximumCharacterCount,MaximumValue,MinimumCharacterCount,MinimumValue,Name,ProductClassification.Code,Sequence,Status,StepValue,UnitOfMeasure.UnitCode,ValueDescription
+WTR-CAT-TECH,WTR-ATTR-FLAECHENLEISTUNG,Flaechenleistung,3.000 m2/h,,RadioButton,,false,false,false,false,,,,,Flaechenleistung,WTR-PC-MACHINE,1,Active,,,
+WTR-CAT-TECH,WTR-ATTR-ARBEITSBREITE,Arbeitsbreite,60 cm,,RadioButton,,false,false,false,false,,,,,Arbeitsbreite,WTR-PC-MACHINE,2,Active,,,

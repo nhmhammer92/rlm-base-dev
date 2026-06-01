@@ -1,0 +1,4 @@
+Catalog.Code,Code,Description,IsNavigational,Name,ParentCategory.Code,SortOrder
+WTR-CATALOG,WTR-CAT-BRUSHES,,true,Buersten,WTR-CAT-SCRUBBER-ACC,
+WTR-CATALOG,WTR-CAT-SQUEEGEES,,true,Sauglippen,WTR-CAT-SCRUBBER-ACC,
+WTR-CATALOG,WTR-CAT-ACC-MISC,,true,Zubehoer,WTR-CAT-SCRUBBER-ACC,

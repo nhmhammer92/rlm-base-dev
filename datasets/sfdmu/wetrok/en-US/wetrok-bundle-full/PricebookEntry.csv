@@ -1,0 +1,45 @@
+$$Product2.StockKeepingUnit$ProductSellingModel.Name$CurrencyIsoCode,CurrencyIsoCode,IsActive,IsDerived,Name,Pricebook2.$$Name$IsStandard,Product2.StockKeepingUnit,ProductSellingModel.$$Name$SellingModelType,UnitPrice
+WTR-PAD-DRIVE;One-Time;CHF,CHF,true,false,Pad-Antriebsscheibe,Standard Price Book;true,WTR-PAD-DRIVE,One-Time;OneTime,49
+WTR-PAD-DRIVE;One-Time;USD,USD,true,false,Pad-Antriebsscheibe,Standard Price Book;true,WTR-PAD-DRIVE,One-Time;OneTime,48
+WTR-PAD-RED;One-Time;CHF,CHF,true,false,Scheuerpad rot,Standard Price Book;true,WTR-PAD-RED,One-Time;OneTime,20
+WTR-PAD-RED;One-Time;USD,USD,true,false,Scheuerpad rot,Standard Price Book;true,WTR-PAD-RED,One-Time;OneTime,19
+WTR-PAD-BLUE;One-Time;CHF,CHF,true,false,Scheuerpad blau,Standard Price Book;true,WTR-PAD-BLUE,One-Time;OneTime,20
+WTR-PAD-BLUE;One-Time;USD,USD,true,false,Scheuerpad blau,Standard Price Book;true,WTR-PAD-BLUE,One-Time;OneTime,19
+WTR-PAD-GREEN;One-Time;CHF,CHF,true,false,Scheuerpad gruen,Standard Price Book;true,WTR-PAD-GREEN,One-Time;OneTime,20
+WTR-PAD-GREEN;One-Time;USD,USD,true,false,Scheuerpad gruen,Standard Price Book;true,WTR-PAD-GREEN,One-Time;OneTime,19
+WTR-PAD-BLACK;One-Time;CHF,CHF,true,false,Scheuerpad schwarz,Standard Price Book;true,WTR-PAD-BLACK,One-Time;OneTime,24
+WTR-PAD-BLACK;One-Time;USD,USD,true,false,Scheuerpad schwarz,Standard Price Book;true,WTR-PAD-BLACK,One-Time;OneTime,24
+WTR-PAD-FIBER;One-Time;CHF,CHF,true,false,Microsol Faser-Pad,Standard Price Book;true,WTR-PAD-FIBER,One-Time;OneTime,30
+WTR-PAD-FIBER;One-Time;USD,USD,true,false,Microsol Faser-Pad,Standard Price Book;true,WTR-PAD-FIBER,One-Time;OneTime,30
+WTR-PAD-MELAMIN;One-Time;CHF,CHF,true,false,Melamin-Pad,Standard Price Book;true,WTR-PAD-MELAMIN,One-Time;OneTime,27
+WTR-PAD-MELAMIN;One-Time;USD,USD,true,false,Melamin-Pad,Standard Price Book;true,WTR-PAD-MELAMIN,One-Time;OneTime,27
+WTR-BRUSH-SN;One-Time;CHF,CHF,true,false,Scheuerbuerste Supernylon,Standard Price Book;true,WTR-BRUSH-SN,One-Time;OneTime,71
+WTR-BRUSH-SN;One-Time;USD,USD,true,false,Scheuerbuerste Supernylon,Standard Price Book;true,WTR-BRUSH-SN,One-Time;OneTime,70
+WTR-BRUSH-SNW;One-Time;CHF,CHF,true,false,Scheuerbuerste Supernylon weich,Standard Price Book;true,WTR-BRUSH-SNW,One-Time;OneTime,79
+WTR-BRUSH-SNW;One-Time;USD,USD,true,false,Scheuerbuerste Supernylon weich,Standard Price Book;true,WTR-BRUSH-SNW,One-Time;OneTime,78
+WTR-BRUSH-FIL;One-Time;CHF,CHF,true,false,Scheuerbuerste Filament,Standard Price Book;true,WTR-BRUSH-FIL,One-Time;OneTime,74
+WTR-BRUSH-FIL;One-Time;USD,USD,true,false,Scheuerbuerste Filament,Standard Price Book;true,WTR-BRUSH-FIL,One-Time;OneTime,73
+WTR-SQ-REAR-NR;One-Time;CHF,CHF,true,false,Arbeitslippe hinten 89 NR,Standard Price Book;true,WTR-SQ-REAR-NR,One-Time;OneTime,38
+WTR-SQ-REAR-NR;One-Time;USD,USD,true,false,Arbeitslippe hinten 89 NR,Standard Price Book;true,WTR-SQ-REAR-NR,One-Time;OneTime,38
+WTR-SQ-FRONT-NR;One-Time;CHF,CHF,true,false,Dichtlippe vorne 89 NR,Standard Price Book;true,WTR-SQ-FRONT-NR,One-Time;OneTime,35
+WTR-SQ-FRONT-NR;One-Time;USD,USD,true,false,Dichtlippe vorne 89 NR,Standard Price Book;true,WTR-SQ-FRONT-NR,One-Time;OneTime,35
+WTR-SQ-REAR-PUR;One-Time;CHF,CHF,true,false,Arbeitslippe hinten 89 PUR,Standard Price Book;true,WTR-SQ-REAR-PUR,One-Time;OneTime,46
+WTR-SQ-REAR-PUR;One-Time;USD,USD,true,false,Arbeitslippe hinten 89 PUR,Standard Price Book;true,WTR-SQ-REAR-PUR,One-Time;OneTime,45
+WTR-SQ-FRONT-PUR;One-Time;CHF,CHF,true,false,Dichtlippe vorne 89 PUR,Standard Price Book;true,WTR-SQ-FRONT-PUR,One-Time;OneTime,42
+WTR-SQ-FRONT-PUR;One-Time;USD,USD,true,false,Dichtlippe vorne 89 PUR,Standard Price Book;true,WTR-SQ-FRONT-PUR,One-Time;OneTime,41
+WTR-SQ-FRONT-PUR-R;One-Time;CHF,CHF,true,false,Dichtlippe vorne 89 PUR gerippt,Standard Price Book;true,WTR-SQ-FRONT-PUR-R,One-Time;OneTime,49
+WTR-SQ-FRONT-PUR-R;One-Time;USD,USD,true,false,Dichtlippe vorne 89 PUR gerippt,Standard Price Book;true,WTR-SQ-FRONT-PUR-R,One-Time;OneTime,48
+WTR-ACC-HOSE;One-Time;CHF,CHF,true,false,Universalfuellschlauch 3 m,Standard Price Book;true,WTR-ACC-HOSE,One-Time;OneTime,30
+WTR-ACC-HOSE;One-Time;USD,USD,true,false,Universalfuellschlauch 3 m,Standard Price Book;true,WTR-ACC-HOSE,One-Time;OneTime,30
+WTR-ACC-TANK;One-Time;CHF,CHF,true,false,Chemiekanister 5 Liter,Standard Price Book;true,WTR-ACC-TANK,One-Time;OneTime,13
+WTR-ACC-TANK;One-Time;USD,USD,true,false,Chemiekanister 5 Liter,Standard Price Book;true,WTR-ACC-TANK,One-Time;OneTime,13
+WTR-ACC-PLATFORM;One-Time;CHF,CHF,true,false,Multifunktionsplattform,Standard Price Book;true,WTR-ACC-PLATFORM,One-Time;OneTime,93
+WTR-ACC-PLATFORM;One-Time;USD,USD,true,false,Multifunktionsplattform,Standard Price Book;true,WTR-ACC-PLATFORM,One-Time;OneTime,92
+WTR-ACC-HOLDER;One-Time;CHF,CHF,true,false,Halterung Teleskopstiel,Standard Price Book;true,WTR-ACC-HOLDER,One-Time;OneTime,52
+WTR-ACC-HOLDER;One-Time;USD,USD,true,false,Halterung Teleskopstiel,Standard Price Book;true,WTR-ACC-HOLDER,One-Time;OneTime,52
+WTR-ACC-BALIT;One-Time;CHF,CHF,true,false,Balit 560 mit Padsohle,Standard Price Book;true,WTR-ACC-BALIT,One-Time;OneTime,131
+WTR-ACC-BALIT;One-Time;USD,USD,true,false,Balit 560 mit Padsohle,Standard Price Book;true,WTR-ACC-BALIT,One-Time;OneTime,130
+WTR-ACC-TELESCOP;One-Time;CHF,CHF,true,false,Teleskopstiel 99-183 cm,Standard Price Book;true,WTR-ACC-TELESCOP,One-Time;OneTime,104
+WTR-ACC-TELESCOP;One-Time;USD,USD,true,false,Teleskopstiel 99-183 cm,Standard Price Book;true,WTR-ACC-TELESCOP,One-Time;OneTime,103
+WTR-ACC-KIT;One-Time;CHF,CHF,true,false,Kit hochbestaendig Duomatic,Standard Price Book;true,WTR-ACC-KIT,One-Time;OneTime,158
+WTR-ACC-KIT;One-Time;USD,USD,true,false,Kit hochbestaendig Duomatic,Standard Price Book;true,WTR-ACC-KIT,One-Time;OneTime,157

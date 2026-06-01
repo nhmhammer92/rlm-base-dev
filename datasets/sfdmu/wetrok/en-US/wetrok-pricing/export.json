@@ -1,0 +1,32 @@
+{
+  "objects": [
+    {
+      "query": "SELECT Name, Status, PricingTerm, PricingTermUnit, SellingModelType FROM ProductSellingModel ORDER BY Name ASC, SellingModelType ASC",
+      "operation": "Upsert",
+      "externalId": "Name;SellingModelType"
+    },
+    {
+      "query": "SELECT StockKeepingUnit FROM Product2 ORDER BY StockKeepingUnit ASC",
+      "operation": "Readonly",
+      "externalId": "StockKeepingUnit"
+    },
+    {
+      "query": "SELECT Name, IsActive, IsStandard, CostBookId, ValidFrom, ValidTo, Description FROM Pricebook2",
+      "operation": "Upsert",
+      "externalId": "Name;IsStandard"
+    },
+    {
+      "query": "SELECT Id, IsDefault, Product2Id, ProductSellingModelId, ProrationPolicyId, Product2.StockKeepingUnit, ProductSellingModel.Name, ProductSellingModel.SellingModelType FROM ProductSellingModelOption ORDER BY Product2.StockKeepingUnit ASC, ProductSellingModel.Name ASC, ProductSellingModel.SellingModelType ASC",
+      "operation": "Upsert",
+      "externalId": "Product2.StockKeepingUnit;ProductSellingModel.Name;ProductSellingModel.SellingModelType"
+    },
+    {
+      "query": "SELECT Name, IsActive, IsDerived, Pricebook2Id, Product2Id, ProductSellingModelId, UnitPrice, CurrencyIsoCode, Product2.StockKeepingUnit, ProductSellingModel.Name FROM PricebookEntry ORDER BY Product2.StockKeepingUnit ASC, Pricebook2.Name ASC, CurrencyIsoCode DESC, Name ASC, ProductSellingModel.Name ASC",
+      "operation": "Insert",
+      "externalId": "Product2.StockKeepingUnit;ProductSellingModel.Name;CurrencyIsoCode"
+    }
+  ],
+  "apiVersion": "66.0",
+  "excludeIdsFromCSVFiles": "true",
+  "orgs": []
+}

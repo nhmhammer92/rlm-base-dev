@@ -1,0 +1,52 @@
+{
+  "objects": [
+    {
+      "query": "SELECT Code, DataType, Description, Id, Name, Status, UnitOfMeasureId FROM AttributePicklist ORDER BY Name ASC",
+      "operation": "Upsert",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT Abbreviation, Code, DisplayValue, Id, IsDefault, Name, PicklistId, Sequence, Status, Value FROM AttributePicklistValue ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Code, DataType, DefaultHelpText, DefaultValue, Description, DeveloperName, Id, IsActive, IsRequired, Label, Name, PicklistId, SourceSystemIdentifier, UnitOfMeasureId, ValueDescription FROM AttributeDefinition ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Code, Description, Id, Name FROM AttributeCategory ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, Id, AttributeCategory.Code, AttributeDefinition.Code FROM AttributeCategoryAttribute ORDER BY AttributeCategory.Code ASC, AttributeDefinition.Code ASC",
+      "operation": "Upsert",
+      "externalId": "AttributeCategory.Code;AttributeDefinition.Code"
+    },
+    {
+      "query": "SELECT Code, Id, Name, ParentProductClassificationId, Status FROM ProductClassification ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, AttributeNameOverride, DefaultValue, Description, DisplayType, HelpText, Id, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, MaximumCharacterCount, MaximumValue, MinimumCharacterCount, MinimumValue, Name, ProductClassificationId, Sequence, Status, StepValue, UnitOfMeasureId, ValueDescription FROM ProductClassificationAttr ORDER BY ProductClassification.Code ASC, AttributeDefinition.Code ASC, AttributeCategory.Code ASC, Name ASC",
+      "operation": "Upsert",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT BasedOnId, CanRamp, ConfigureDuringSale, Description, DisplayUrl, Family, Id, IsActive, IsAssetizable, IsSoldOnlyWithOtherProds, Name, ProductCode, QuantityUnitOfMeasure, SpecificationType, StockKeepingUnit, Type, UnitOfMeasureId FROM Product2 ORDER BY StockKeepingUnit ASC",
+      "operation": "Upsert",
+      "externalId": "StockKeepingUnit"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, AttributeNameOverride, DefaultValue, Description, DisplayType, HelpText, Id, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, MaximumCharacterCount, MaximumValue, MinimumCharacterCount, MinimumValue, Name, OverriddenProductAttributeDefinitionId, Product2Id, ProductClassificationAttributeId, Sequence, Status, StepValue, UnitOfMeasureId, ValueDescription, Product2.StockKeepingUnit, AttributeCategory.Code, AttributeDefinition.Code, ProductClassificationAttribute.Name FROM ProductAttributeDefinition ORDER BY Product2.StockKeepingUnit ASC, AttributeCategory.Code ASC, AttributeDefinition.Code ASC, ProductClassificationAttribute.Name ASC",
+      "operation": "Upsert",
+      "externalId": "AttributeDefinition.Code;Product2.StockKeepingUnit"
+    }
+  ],
+  "apiVersion": "66.0",
+  "excludeIdsFromCSVFiles": "true",
+  "orgs": []
+}
