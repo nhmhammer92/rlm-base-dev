@@ -3,13 +3,13 @@
 > **Auto-generated** by `scripts/ai/generate_cci_reference.py` from `cumulusci.yml`.  
 > Do not edit manually — re-run the script after changing `cumulusci.yml`.
 
-**202 tasks** across **9 groups**.
+**274 tasks** across **10 groups**.
 
 ---
 
 ## Data Maintenance
 
-*4 task(s)*
+*8 task(s)*
 
 ### `delete_draft_billing_records`
 
@@ -20,6 +20,42 @@
 **Options:**
 
 - `path`: `scripts/apex/deleteDraftBillingRecords.apex`
+
+---
+
+### `delete_q3_pricing_data`
+
+**Description:** Delete all Insert-operation records from the q3-pricing plan (CostBookEntry, PricebookEntryDerivedPrice, PricebookEntry, BundleBasedAdjustment, AttributeBasedAdjustment, AttributeAdjustmentCondition, PriceAdjustmentTier) in reverse plan order (children first). Shape-agnostic, mirrors delete_quantumbit_pricing_data. Run before insert_q3_pricing_data so q3 pricing loads (plain Insert, no deleteOldData) are safe to rerun.
+
+**Class:** `tasks.rlm_sfdmu.DeleteSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-pricing`
+
+---
+
+### `delete_q3_rates_data`
+
+**Description:** Delete all rates data (RateAdjustmentByTier, RateCardEntry, PriceBookRateCard, RateCard), deactivating Active records first. Shape-agnostic — reuses deleteQbRatesData.apex. Run before re-inserting q3-rates so a rerun on a q3 org doesn't fail deleting Active records (the q3-rates plan uses Insert+deleteOldData and activation makes them Active).
+
+**Class:** `cumulusci.tasks.apex.anon.AnonymousApexTask`
+
+**Options:**
+
+- `path`: `scripts/apex/deleteQbRatesData.apex`
+
+---
+
+### `delete_q3_rating_data`
+
+**Description:** Delete all rating data (PUG, PURP, PUR, RatingFrequencyPolicy, etc.), deactivating Active PUGs first. Shape-agnostic — reuses deleteQbRatingData.apex. Run before re-inserting q3-rating so a rerun on a q3 org doesn't fail deleting Active records.
+
+**Class:** `cumulusci.tasks.apex.anon.AnonymousApexTask`
+
+**Options:**
+
+- `path`: `scripts/apex/deleteQbRatingData.apex`
 
 ---
 
@@ -49,13 +85,25 @@
 
 ### `delete_quantumbit_pricing_data`
 
-**Description:** Delete all Insert-operation records from the qb-pricing plan (PricebookEntryDerivedPrice, PricebookEntry, BundleBasedAdjustment, AttributeBasedAdjustment, AttributeAdjustmentCondition, PriceAdjustmentTier) in reverse plan order (children first). Shape-agnostic: clears all records of each type regardless of which data shape populated them. Run before insert_quantumbit_pricing_data when layering multiple pricing shapes. Note: CostBookEntry is currently excluded (empty CSV) and will not be deleted.
+**Description:** Delete all Insert-operation records from the qb-pricing plan (CostBookEntry, PricebookEntryDerivedPrice, PricebookEntry, BundleBasedAdjustment, AttributeBasedAdjustment, AttributeAdjustmentCondition, PriceAdjustmentTier) in reverse plan order (children first). Shape-agnostic: clears all records of each type regardless of which data shape populated them. Run before insert_quantumbit_pricing_data when layering multiple pricing shapes.
 
 **Class:** `tasks.rlm_sfdmu.DeleteSFDMUData`
 
 **Options:**
 
 - `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-pricing`
+
+---
+
+### `delete_quantumbit_prm_pricing_data`
+
+**Description:** Delete all records from the qb-prm-pricing plan (ChannelProgramMember, ChannelProgramLevel, ChannelProgram, Account) in reverse plan order (children first). Run before insert_quantumbit_prm_pricing_data when resetting PRM pricing overlay data.
+
+**Class:** `tasks.rlm_sfdmu.DeleteSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-prm-pricing`
 
 ---
 
@@ -81,7 +129,7 @@
 
 ## Data Management - Extract
 
-*16 task(s)*
+*24 task(s)*
 
 ### `export_bre_rule_library`
 
@@ -92,6 +140,90 @@
 **Options:**
 
 - `output_dir`: `datasets/bre/exports`
+
+---
+
+### `extract_q3_billing_data`
+
+**Description:** Extract q3-billing from org to CSV, aligned to the qb-billing schema. Output in datasets/sfdmu/extractions/q3-billing/<timestamp>/processed/. Use run_post_process false to skip.
+
+**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-billing`
+
+---
+
+### `extract_q3_dro_data`
+
+**Description:** Extract q3-dro from org to CSV, aligned to the qb-dro schema. Output in datasets/sfdmu/extractions/q3-dro/<timestamp>/processed/. Use run_post_process false to skip.
+
+**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-dro`
+
+---
+
+### `extract_q3_pcm_data`
+
+**Description:** Extract q3-pcm (product catalog) from org to CSV, aligned to the qb-pcm schema. Output in datasets/sfdmu/extractions/q3-pcm/<timestamp>/processed/. Use run_post_process false to skip.
+
+**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-pcm`
+
+---
+
+### `extract_q3_pricing_data`
+
+**Description:** Extract q3-pricing from org to CSV, aligned to the qb-pricing schema. Output in datasets/sfdmu/extractions/q3-pricing/<timestamp>/processed/. Use run_post_process false to skip.
+
+**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-pricing`
+
+---
+
+### `extract_q3_rates_data`
+
+**Description:** Extract q3-rates from org to CSV, aligned to the qb-rates schema. Output in datasets/sfdmu/extractions/q3-rates/<timestamp>/processed/. Use run_post_process false to skip.
+
+**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-rates`
+
+---
+
+### `extract_q3_rating_data`
+
+**Description:** Extract q3-rating from org to CSV, aligned to the qb-rating schema. Output in datasets/sfdmu/extractions/q3-rating/<timestamp>/processed/. Use run_post_process false to skip.
+
+**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-rating`
+
+---
+
+### `extract_q3_tax_data`
+
+**Description:** Extract q3-tax from org to CSV, aligned to the qb-tax schema. Output in datasets/sfdmu/extractions/q3-tax/<timestamp>/processed/. Use run_post_process false to skip.
+
+**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-tax`
 
 ---
 
@@ -143,18 +275,6 @@
 
 ---
 
-### `extract_qb_guidedselling_data`
-
-**Description:** Extract qb-guidedselling from org to CSV. Output in datasets/sfdmu/extractions/qb-guidedselling/<timestamp>. Runs post-process by default; re-import-ready CSVs in <timestamp>/processed/. Use run_post_process false to skip.
-
-**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
-
-**Options:**
-
-- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-guidedselling`
-
----
-
 ### `extract_qb_guidedselling_products_data`
 
 **Description:** Extract qb-guidedselling-products from org to CSV. Output in datasets/sfdmu/extractions/qb-guidedselling-products/<timestamp>. Runs post-process by default; re-import-ready CSVs in <timestamp>/processed/. Use run_post_process false to skip.
@@ -200,6 +320,18 @@
 **Options:**
 
 - `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-prm`
+
+---
+
+### `extract_qb_prm_pricing_data`
+
+**Description:** Extract qb-prm-pricing (PRM pricing overlay) from org to CSV. Output in datasets/sfdmu/extractions/qb-prm-pricing/<timestamp>. Runs post-process by default; re-import-ready CSVs in <timestamp>/processed/. Use run_post_process false to skip.
+
+**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-prm-pricing`
 
 ---
 
@@ -276,9 +408,112 @@
 
 ---
 
+### `validate_source_keys`
+
+**Description:** Pre-extraction guard: validate (and optionally populate) a plan's source-org externalId key fields (StockKeepingUnit, *.Code, *.UnitCode, ...) so extraction produces unambiguous composite keys. Report-only by default; pass populate=true to fill null single-field keys with unique derived values. Set pathtoexportjson to the plan dir.
+
+**Class:** `tasks.rlm_validate_keys.ValidateSourceDataKeys`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-pcm`
+
+---
+
 ## Data Management - Idempotency
 
-*14 task(s)*
+*21 task(s)*
+
+### `test_q3_billing_idempotency`
+
+**Description:** Idempotency test for q3-billing. Requires the Billing feature enabled on the target org (q3-262 reports GeneralLedgerAccount/BillingPolicy unsupported).
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-billing`
+- `use_extraction_roundtrip`: `False`
+
+---
+
+### `test_q3_dro_idempotency`
+
+**Description:** Idempotency test for q3-dro. Requires the DRO feature enabled on the target org (q3-262 has no DRO records).
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-dro`
+- `use_extraction_roundtrip`: `False`
+
+---
+
+### `test_q3_pcm_idempotency`
+
+**Description:** Idempotency test for q3-pcm (product catalog). Loads twice from source, asserts no new records.
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-pcm`
+- `use_extraction_roundtrip`: `False`
+
+---
+
+### `test_q3_pricing_idempotency`
+
+**Description:** Idempotency test for q3-pricing (load twice from source, assert no new records).
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-pricing`
+- `use_extraction_roundtrip`: `False`
+
+---
+
+### `test_q3_rates_idempotency`
+
+**Description:** Idempotency test for q3-rates (load twice from source, assert no new records).
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-rates`
+- `use_extraction_roundtrip`: `False`
+
+---
+
+### `test_q3_rating_idempotency`
+
+**Description:** Idempotency test for q3-rating (load twice from source, assert no new records).
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-rating`
+- `use_extraction_roundtrip`: `False`
+
+---
+
+### `test_q3_tax_idempotency`
+
+**Description:** Idempotency test for q3-tax (tax policies and treatments).
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-tax`
+- `use_extraction_roundtrip`: `False`
+
+---
 
 ### `test_qb_approvals_idempotency`
 
@@ -332,19 +567,6 @@
 
 ---
 
-### `test_qb_guidedselling_idempotency`
-
-**Description:** Idempotency test for qb-guidedselling.
-
-**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
-
-**Options:**
-
-- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-guidedselling`
-- `use_extraction_roundtrip`: `False`
-
----
-
 ### `test_qb_guidedselling_products_idempotency`
 
 **Description:** Idempotency test for qb-guidedselling-products (Product2 guided selling field updates).
@@ -394,6 +616,19 @@
 **Options:**
 
 - `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-prm`
+- `use_extraction_roundtrip`: `False`
+
+---
+
+### `test_qb_prm_pricing_idempotency`
+
+**Description:** Idempotency test for qb-prm-pricing (PRM pricing overlay).
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-prm-pricing`
 - `use_extraction_roundtrip`: `False`
 
 ---
@@ -461,6 +696,262 @@
 
 - `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-transactionprocessingtypes`
 - `use_extraction_roundtrip`: `False`
+
+---
+
+## Documentation
+
+*16 task(s)*
+
+### `snapshot_agents_help_262`
+
+**Description:** Snapshot the 262 Agentforce for Revenue Management area of Salesforce Help. Covers the 7 revenue-management subagents (Product Selection, Product Description Generation, Quote Management, Consumption Management, Invoice Line Explanation, Billing Collections Management, Billing Inquiries) plus agent templates and setup. Root and prefix verified via RLM sidebar walk.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `agents`
+- `root_article_id`: `ind.rev_agent_overview.htm`
+- `article_id_prefix`: `ind.rev_agent`
+- `mode`: `all`
+
+---
+
+### `snapshot_approvals_help_262`
+
+**Description:** Snapshot the 262 Advanced Approvals area of Salesforce Help (~34 articles per the sidebar walk). Covers Advanced Approval Objects, approval workflow design, Smart Approvals, approval previews, Slack notifications, auto-approval rules. Note: the data-model domain is thin (1 object, ApprovalSubmission) but the Help area is rich. Root and prefix verified via sidebar walk.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `approvals`
+- `root_article_id`: `ind.approvals_advanced_approvals.htm`
+- `article_id_prefix`: `ind.approvals`
+- `mode`: `all`
+
+---
+
+### `snapshot_billing_help_260`
+
+**Description:** Snapshot the 260 (Spring '26) Billing area of Salesforce Help. For diff-against-262 verification work.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `260`
+- `release_name`: `Spring '26`
+- `area`: `billing`
+- `root_article_id`: `ind.billing.htm`
+- `article_id_prefix`: `ind.billing`
+- `mode`: `all`
+
+---
+
+### `snapshot_billing_help_262`
+
+**Description:** Snapshot the 262 (Summer '26) Billing area of Salesforce Help. ~171 articles (matches the captured inventory below). Default headless run takes ~10-15 minutes.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `billing`
+- `root_article_id`: `ind.billing.htm`
+- `article_id_prefix`: `ind.billing`
+- `mode`: `all`
+
+---
+
+### `snapshot_collections_help_262`
+
+**Description:** Snapshot the 262 (Summer '26) Collections and Recovery area of Salesforce Help. Covers Collection Plans, Collection Plan Reasons, treatment/dunning flows, Promise to Pay, write-offs, late fees, and the decision-matrix-driven Create Case automation. Root verified via the Collections area landing page.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `collections`
+- `root_article_id`: `ind.collections.htm`
+- `article_id_prefix`: `ind.collections`
+- `mode`: `all`
+
+---
+
+### `snapshot_configurator_help_262`
+
+**Description:** Snapshot the 262 Product Configurator area of Salesforce Help. Covers ProductConfigurationFlow, ProductConfigurationRule. Small data-model domain (4 objects) but the Help area covers configuration rules and flow assignments that affect Quote/Order configuration. Root verified via RLM sidebar walk.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `configurator`
+- `root_article_id`: `ind.product_configurator_introduction.htm`
+- `article_id_prefix`: `ind.product_configurator`
+- `mode`: `all`
+
+---
+
+### `snapshot_dev_guide_262`
+
+**Description:** Snapshot the full 262 (Summer '26) Revenue Cloud Developer Guide (atlas deliverable revenue_lifecycle_management_dev_guide). Use -o section "Constraint Modeling Language" to capture a single section.
+
+**Class:** `tasks.rlm_snapshot_dev_guide.SnapshotSalesforceDevGuide`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `deliverable`: `revenue_lifecycle_management_dev_guide`
+- `mode`: `all`
+
+---
+
+### `snapshot_dro_help_262`
+
+**Description:** Snapshot the 262 DRO (Dynamic Revenue Orchestration) / Fulfillment area of Salesforce Help. Covers FulfillmentPlan, FulfillmentStep, FulfillmentStepDefinition, ProductFulfillmentDecompRule. Root verified via RLM sidebar walk.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `dro`
+- `root_article_id`: `ind.dro_dynamic_revenue_orchestrator.htm`
+- `article_id_prefix`: `ind.dro`
+- `mode`: `all`
+
+---
+
+### `snapshot_industries_dev_guide_262`
+
+**Description:** Snapshot the RC-relevant sections of the 262 (Summer '26) Industries Common Resources Developer Guide (atlas deliverable industries_reference). The full guide is ~1435 pages across 37 sections, most for other Industries clouds; this captures the ~571 pages RC builds on — Business Rules Engine, Context Service, OmniStudio, Discovery Framework, Data Processing Engine/Batch, Decision Explainer, Collections and Recovery, Action Launcher, and Timeline — into a separate corpus (dev-guide-industries) so it never clobbers the RLM dev-guide. Capture is scoped to those sections' TOC subtrees; follow_links stays off (its default when `sections` is set) so a link out of scope can't pull unrelated sections in. Edit the `sections` list to widen/narrow coverage.
+
+**Class:** `tasks.rlm_snapshot_dev_guide.SnapshotSalesforceDevGuide`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `deliverable`: `industries_reference`
+- `output_dir`: `docs/salesforce/262/dev-guide-industries`
+- `sections`: `business_rules_engine, context_service_overview, omnistudio_overview, discovery_framework, batch, decision_explainer,...`
+- `mode`: `all`
+
+---
+
+### `snapshot_pcm_help_262`
+
+**Description:** Snapshot the 262 (Summer '26) Product Catalog Management area of Salesforce Help. Covers Product2, ProductCategory, AttributeDefinition, ProductRelatedComponent. Root verified via RLM sidebar walk.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `pcm`
+- `root_article_id`: `ind.product_catalog_introduction.htm`
+- `article_id_prefix`: `ind.product_catalog`
+- `mode`: `all`
+
+---
+
+### `snapshot_pricing_help_262`
+
+**Description:** Snapshot the 262 Pricing area of Salesforce Help. Covers PriceBook2, PriceBookEntry, PriceAdjustmentSchedule, ProductSellingModel, proration. Distinct from Rate Management. Root verified via RLM sidebar walk.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `pricing`
+- `root_article_id`: `ind.pricing_salesforce_pricing.htm`
+- `article_id_prefix`: `ind.pricing`
+- `mode`: `all`
+
+---
+
+### `snapshot_rating_help_262`
+
+**Description:** Snapshot the 262 Rate Management area of Salesforce Help. Required for Module 3 Unit 2 LO validation (Rate Card, Rate Card Entry, Asset Rate Card Entry, Asset Rate Adjustment, Rating Procedure, the Transaction Journal → Usage Summary → Ratable Summary → Liable Summary pipeline). Root verified via RLM sidebar walk. Prefix `ind.rm_*` (NOT `ind.rate_*`).
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `rating`
+- `root_article_id`: `ind.rm_rate_management.htm`
+- `article_id_prefix`: `ind.rm`
+- `mode`: `all`
+
+---
+
+### `snapshot_salesforce_dev_guide`
+
+**Description:** Generic atlas Developer Guide snapshot. Fetches the guide TOC, captures each page as markdown with YAML frontmatter to docs/salesforce/{release_version}/dev-guide/articles/, and writes manifest.json and index.md. Provide release_version, release_name, and (optionally) deliverable / doc_version / section at invocation time.
+
+**Class:** `tasks.rlm_snapshot_dev_guide.SnapshotSalesforceDevGuide`
+
+---
+
+### `snapshot_salesforce_help`
+
+**Description:** Generic snapshot task. Walks a Salesforce Help portal area from a root article ID, captures every article whose ID starts with the given prefix, and writes markdown files with YAML frontmatter to docs/salesforce/{release_version}/help/articles/. Also produces manifest.json and index.md.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+---
+
+### `snapshot_transaction_mgmt_help_262`
+
+**Description:** Snapshot the 262 Transaction Management area of Salesforce Help. Covers Quote, QuoteLineItem, Order, OrderItem, Contract, Asset, AssetAction, AssetStatePeriod, AssetRelationship, and quote/order/asset lifecycle management. ONE combined area with prefix `ind.qocal_*` — not four separate areas. Root verified via RLM sidebar walk.
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `transaction_mgmt`
+- `root_article_id`: `ind.qocal_sales_transactions_rev_cloud.htm`
+- `article_id_prefix`: `ind.qocal`
+- `mode`: `all`
+
+---
+
+### `snapshot_usage_help_262`
+
+**Description:** Snapshot the 262 Usage Management area of Salesforce Help. Required for Module 3 Unit 1 + Unit 3 LO validation (data model, Usage Agent, Drawdown Policies, Digital Wallets, TransactionUsageEntitlement, Usage Entitlement Account / Bucket / Entry). Root verified via RLM sidebar walk. Prefix `ind.um_*` (NOT `ind.usage_*`).
+
+**Class:** `tasks.rlm_snapshot_help.SnapshotSalesforceHelp`
+
+**Options:**
+
+- `release_version`: `262`
+- `release_name`: `Summer '26`
+- `area`: `usage`
+- `root_article_id`: `ind.um_usage_management.htm`
+- `article_id_prefix`: `ind.um`
+- `mode`: `all`
 
 ---
 
@@ -539,19 +1030,7 @@
 
 ## Partner Relationship Management
 
-*3 task(s)*
-
-### `deploy_post_prm_tso`
-
-**Description:** Deploy TSO-only PRM experience overlay containing the View Vouchers page (requires Referral and Voucher objects enabled in TSO orgs).
-
-**Class:** `cumulusci.tasks.salesforce.Deploy`
-
-**Options:**
-
-- `path`: `unpackaged/post_prm_tso`
-
----
+*2 task(s)*
 
 ### `patch_network_email_for_deploy`
 
@@ -571,7 +1050,15 @@
 
 ## Revenue Lifecycle Management
 
-*126 task(s)*
+*165 task(s)*
+
+### `activate_agents`
+
+**Description:** Activate the latest BotVersion for each RLM agent by running `sf agent activate`. Discovers agents from both unpackaged/post_agents/aiAuthoringBundles (new format) and unpackaged/post_agents/legacy/bots (legacy format). BotVersion.Status is not DML-writable, so activation must go through the platform-supported CLI wrapper around the Connect REST endpoint.
+
+**Class:** `tasks.rlm_activate_agents.ActivateAgents`
+
+---
 
 ### `activate_and_deploy_expression_sets`
 
@@ -660,6 +1147,19 @@
 
 ---
 
+### `activate_prm_expression_sets`
+
+**Description:** Activate PRM pricing expression set versions via Tooling API
+
+**Class:** `tasks.rlm_manage_expression_sets.ManageExpressionSets`
+
+**Options:**
+
+- `operation`: `activate_versions`
+- `metadata_path`: `unpackaged/post_prm_pricing/expressionSetDefinition`
+
+---
+
 ### `activate_procedure_plan_expression_sets`
 
 **Description:** Activate Procedure Plan expression set versions (RLM_Price_Distribution_Procedure; RLM_DefaultPricingProcedure is activated by the main activate_expression_sets task)
@@ -687,13 +1187,9 @@
 
 ### `activate_rates`
 
-**Description:** Activate Rates
+**Description:** Activate Draft RateCardEntry records (Status → Active). Uses REST Composite API instead of Apex DML — Apex path raises UNKNOWN_EXCEPTION in Release 262 (platform regression in SOAP Execute Anonymous for RateCardEntry).
 
-**Class:** `cumulusci.tasks.apex.anon.AnonymousApexTask`
-
-**Options:**
-
-- `path`: `scripts/apex/activateRateCardEntries.apex`
+**Class:** `tasks.rlm_activate_rates.ActivateRateCardEntries`
 
 ---
 
@@ -770,20 +1266,55 @@
 
 ---
 
-### `apply_context_ramp_mode`
+### `apply_context_prm_pricing`
 
-**Description:** Adds RampMode__c (SalesTransactionItem) and GroupRampMode__c (SalesTransactionGroup) context attributes to the Sales Transaction context definition and maps them to QuoteLineItem.RLM_RampMode__c and QuoteLineGroup.RLM_RampMode__c (QuoteEntitiesMapping) and OrderItem.RLM_RampMode__c and OrderItemGroup.RLM_RampMode__c (OrderEntitiesMapping).
+**Description:** Adds PRM pricing context attributes and Quote/QuoteLineItem mappings to RLM_SalesTransactionContext (PartnerAccount, distributor account, and partner/distributor pricing fields) using an additive Context Service plan.
 
 **Class:** `tasks.rlm_context_service.ManageContextDefinition`
 
 **Options:**
 
 - `developer_name`: `RLM_SalesTransactionContext`
-- `plan_file`: `datasets/context_plans/RampMode/manifest.json`
+- `plan_file`: `datasets/context_plans/PrmPricing/manifest.json`
 - `translate_plan`: `True`
 - `deactivate_before`: `False`
 - `activate`: `True`
 - `verify`: `True`
+
+---
+
+### `apply_expression_set_overlay`
+
+**Description:** Apply a declarative overlay (add/remove/update/reorder steps and variables) to an expression set via BRE Connect API with deactivate/modify/reactivate lifecycle.
+
+**Class:** `tasks.rlm_expression_set_connect.ApplyExpressionSetOverlay`
+
+**Options:**
+
+- `overlay_file`: `None`
+- `dry_run`: `False`
+- `verify`: `True`
+- `skip_validation`: `False`
+- `normalize_html_entities`: `True`
+- `activate_after_apply`: `True`
+- `cascade_deactivate_procedure_plan`: `True`
+- `max_wait_seconds`: `45`
+- `poll_interval_seconds`: `3`
+
+---
+
+### `apply_procedure_plan_overlay`
+
+**Description:** Apply a Procedure Plan overlay from JSON with resolved IDs and a guarded deactivate/apply/verify/reactivate sequence.
+
+**Class:** `tasks.rlm_apply_procedure_plan_overlay.ApplyProcedurePlanOverlay`
+
+**Options:**
+
+- `overlay_file`: `datasets/procedure_plan_overlays/prm_pricing.json`
+- `developerName`: `RLM_Quote_Pricing_Procedure_Plan`
+- `verify`: `True`
+- `activate_after_apply`: `True`
 
 ---
 
@@ -800,6 +1331,31 @@
 
 ---
 
+### `assign_personas_sales_rep_psg`
+
+**Description:** Assign RLM_Sales_Representative PSG to the sales-rep-user persona using tolerant assignment.
+
+**Class:** `tasks.rlm_assign_permission_set_groups.AssignPermissionSetGroupsTolerant`
+
+**Options:**
+
+- `api_names`: `['RLM_Sales_Representative']`
+- `user_alias`: `salesrep`
+
+---
+
+### `check_decision_table_freshness`
+
+**Description:** Report every decision table's freshness verdict headlessly — the same comparison the Decision Table Manager component shows, without a browser. A table is Stale when any object it reads changed at or after its last full sync — the tie counts as stale, because nothing establishes which came first — including objects it only pulls columns from. "Not comparable" means the check refused to guess (usually an unreproducible source criterion), which is a refusal, not a failure. Pass -o param1 strict to FAIL on any stale table — off by default, because a build that loads data after its refresh step will legitimately show stale tables. Requires post_utils deployed.
+
+**Class:** `tasks.rlm_apex_file.FileBasedAnonymousApexTask`
+
+**Options:**
+
+- `path`: `scripts/apex/checkDecisionTableFreshness.apex`
+
+---
+
 ### `cleanup_settings_for_dev`
 
 **Description:** Clean up settings files before deployment (removes fields unsupported in the target org)
@@ -810,6 +1366,22 @@
 
 - `path`: `unpackaged/pre`
 - `remove_for_scratch`: `True`
+
+---
+
+### `configure_core_pricing_recipe_table_mappings`
+
+**Description:** Ensure core PricingRecipeTableMapping rows exist for NGPDefaultRecipe (RLM_CostBookEntries as a ListPrice table). Uses Tooling API for idempotent create/update without metadata deploy.
+
+**Class:** `tasks.rlm_configure_pricing_recipe_table_mappings.ConfigurePricingRecipeTableMappings`
+
+**Options:**
+
+- `operation`: `ensure`
+- `input_file`: `datasets/tooling/PricingRecipeTableMappings/core_ngp_default.json`
+- `api_version`: `None`
+- `dry_run`: `False`
+- `skip_missing_tables`: `False`
 
 ---
 
@@ -824,6 +1396,22 @@
 - `suite`: `robot/rlm-base/tests/setup/configure_core_pricing_setup.robot`
 - `outputdir`: `robot/rlm-base/results`
 - `pricing_procedure`: `RLM Revenue Management Default Pricing Procedure`
+
+---
+
+### `configure_pricing_recipe_table_mappings`
+
+**Description:** Ensure PRM PricingRecipeTableMapping rows exist for NGPDefaultRecipe: RLM_Channel_Program_Level_Partner as PriceAdjustmentMatrix, plus idempotent coverage for the shared RLM_CostBookEntries ListPrice mapping. Uses Tooling API for create/update without metadata deploy.
+
+**Class:** `tasks.rlm_configure_pricing_recipe_table_mappings.ConfigurePricingRecipeTableMappings`
+
+**Options:**
+
+- `operation`: `ensure`
+- `input_file`: `datasets/tooling/PricingRecipeTableMappings/prm_ngp_default.json`
+- `api_version`: `None`
+- `dry_run`: `False`
+- `skip_missing_tables`: `False`
 
 ---
 
@@ -843,7 +1431,7 @@
 
 ### `configure_revenue_settings`
 
-**Description:** Configure Revenue Settings page defaults: Pricing Procedure, Usage Rating, Instant Pricing toggle, Create Orders from Quote flow, and optionally Manage Assets flow (Robot test). Must run after all data/metadata is deployed and before decision table refresh.
+**Description:** Configure Revenue Settings page defaults: Pricing Procedure, Usage Rating, Instant Pricing toggle, Create Orders from Quote flow, and optionally Create Contracts from Quote and Manage Assets flows (Robot test). Must run after all data/metadata is deployed and before decision table refresh.
 
 **Class:** `tasks.rlm_configure_revenue_settings.ConfigureRevenueSettings`
 
@@ -854,6 +1442,14 @@
 - `pricing_procedure`: `RLM Revenue Management Default Pricing Procedure`
 - `usage_rating_procedure`: `RLM Default Rating Discovery Procedure`
 - `create_orders_flow`: `RLM_CreateOrdersFromQuote`
+
+---
+
+### `configure_search_index`
+
+**Description:** Configure PCM search index fields via Connect API from a declarative JSON config (datasets/search_index/). Supports Standard, Custom, and attribute field types. Additive — merges with existing index configuration, auto-resolves types and IDs from metadata.
+
+**Class:** `tasks.rlm_configure_search_index.ConfigureSearchIndex`
 
 ---
 
@@ -902,6 +1498,20 @@
 **Options:**
 
 - `path`: `scripts/apex/createDRORuleLibrary.apex`
+
+---
+
+### `create_personas_sales_rep_user`
+
+**Description:** Create the Sales Rep persona user from config/users/sales-rep-def.json with the RLM Sales Representative profile. On scratch orgs uses `sf org create user`, which registers the sf auth alias 'sales-rep-user' (usable as `--target-org sales-rep-user`). On non-scratch orgs (production, developer edition, sandbox) inserts a User sObject via REST and sets a password via the REST User password resource (never logged; supply via the 'password' option or RLM_PERSONA_USER_PASSWORD env var to use a known value) — no sf auth alias is created in that case. Idempotent: skips creation when a matching user already exists. Appends a unique username suffix to avoid conflicts.
+
+**Class:** `tasks.rlm_create_persona_user.CreatePersonaUser`
+
+**Options:**
+
+- `definition_file`: `config/users/sales-rep-def.json`
+- `alias`: `sales-rep-user`
+- `set_unique_username`: `True`
 
 ---
 
@@ -961,6 +1571,26 @@
 
 ---
 
+### `deactivate_agents`
+
+**Description:** Deactivate the active BotVersion for each legacy agent (bots/) via `sf agent deactivate`. Required before redeploying legacy Bot+BotVersion metadata on idempotent re-runs — the platform rejects updates to active bots. Already-inactive agents are tolerated (no-op). Does not affect Agent Script (aiAuthoringBundles) agents.
+
+**Class:** `tasks.rlm_deactivate_agents.DeactivateAgents`
+
+---
+
+### `deactivate_collections_case_matrix`
+
+**Description:** Disable the DetermineCaseReasonAndRelatedAttributes decision-matrix version before (re)deploying the DecisionMatrixDefinition. A metadata deploy can't migrate a matrix version while an active (enabled) version with that name exists, so a second prepare_collections run fails without this. No-op on a first run (matrix not deployed yet). seed_collections_case_matrix re-enables it afterward. Run before deploy_post_collections. See scripts/apex/deactivateCollectionsCaseMatrix.apex.
+
+**Class:** `cumulusci.tasks.apex.anon.AnonymousApexTask`
+
+**Options:**
+
+- `path`: `scripts/apex/deactivateCollectionsCaseMatrix.apex`
+
+---
+
 ### `deactivate_decision_tables`
 
 **Description:** Deactivate Decision Tables (required before updating active decision tables)
@@ -986,33 +1616,51 @@
 
 ---
 
-### `deploy_agents`
+### `deactivate_prm_expression_sets`
 
-**Description:** Deploy Agentforce Agent Configurations
+**Description:** Deactivate PRM pricing expression set versions via Tooling API
+
+**Class:** `tasks.rlm_manage_expression_sets.ManageExpressionSets`
+
+**Options:**
+
+- `operation`: `deactivate_versions`
+- `metadata_path`: `unpackaged/post_prm_pricing/expressionSetDefinition`
+
+---
+
+### `delete_expression_set`
+
+**Description:** Delete an expression set via BRE Connect API, or just a single old version (version_api_name) via the sObject API. Destructive — requires confirm:true.
+
+**Class:** `tasks.rlm_expression_set_connect.DeleteExpressionSet`
+
+**Options:**
+
+- `expression_set_api_name`: `None`
+- `version_api_name`: `None`
+- `confirm`: `False`
+- `dry_run`: `False`
+- `max_wait_seconds`: `45`
+- `poll_interval_seconds`: `3`
+
+---
+
+### `deploy_agent_classes`
+
+**Description:** Deploy Apex invocable services from unpackaged/post_agents/classes used by Product Configuration agent flows.
 
 **Class:** `cumulusci.tasks.salesforce.Deploy`
 
 **Options:**
 
-- `path`: `unpackaged/post_agents`
+- `path`: `unpackaged/post_agents/classes`
 
 ---
 
-### `deploy_agents_bots`
+### `deploy_agent_flows`
 
-**Description:** Deploy Agentforce Agent Bots
-
-**Class:** `cumulusci.tasks.salesforce.Deploy`
-
-**Options:**
-
-- `path`: `unpackaged/post_agents/bots`
-
----
-
-### `deploy_agents_flows`
-
-**Description:** Deploy Agentforce Agent Flows
+**Description:** Deploy custom flows from unpackaged/post_agents/flows that back agent subagent topics. Must run before deploy_agents so the flows exist when authoring bundles are published.
 
 **Class:** `cumulusci.tasks.salesforce.Deploy`
 
@@ -1022,45 +1670,9 @@
 
 ---
 
-### `deploy_agents_genAiFunctions`
+### `deploy_agent_permission_sets`
 
-**Description:** Deploy Agentforce Agent Functions
-
-**Class:** `cumulusci.tasks.salesforce.Deploy`
-
-**Options:**
-
-- `path`: `unpackaged/post_agents/genAiFunctions`
-
----
-
-### `deploy_agents_genAiPlanners`
-
-**Description:** Deploy Agentforce Agent Planner Bundles
-
-**Class:** `cumulusci.tasks.salesforce.Deploy`
-
-**Options:**
-
-- `path`: `unpackaged/post_agents/genAiPlannerBundles`
-
----
-
-### `deploy_agents_genAiPlugins`
-
-**Description:** Deploy Agentforce Agent Plugins
-
-**Class:** `cumulusci.tasks.salesforce.Deploy`
-
-**Options:**
-
-- `path`: `unpackaged/post_agents/genAiPlugins`
-
----
-
-### `deploy_agents_permissionsets`
-
-**Description:** Deploy Agentforce Agent Permissionsets
+**Description:** Deploy the Agentforce agent permission sets from unpackaged/post_agents/permissionsets. Must run after publish_agents — each permission set's agentAccesses compiles to a botDefinition reference, and the Bot only exists once the authoring bundle is published.
 
 **Class:** `cumulusci.tasks.salesforce.Deploy`
 
@@ -1070,9 +1682,21 @@
 
 ---
 
+### `deploy_agents`
+
+**Description:** Deploy Agentforce Agent authoring bundles from unpackaged/post_agents/aiAuthoringBundles. Permission sets deploy separately (deploy_agent_permission_sets) after publish, because their agentAccesses reference a Bot that does not exist until publish_agents compiles the bundle.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_agents/aiAuthoringBundles`
+
+---
+
 ### `deploy_agents_settings`
 
-**Description:** Deploy Agentforce Agent Settings
+**Description:** Deploy Agentforce Agent Settings (EinsteinCopilot, EinsteinGpt, AgentPlatform). Required before deploying agent bots/planners.
 
 **Class:** `cumulusci.tasks.salesforce.Deploy`
 
@@ -1117,6 +1741,18 @@
 **Options:**
 
 - `path`: `unpackaged/post_billing_template_settings`
+
+---
+
+### `deploy_collections_case_flow`
+
+**Description:** Deploy the RLM_Create_Case_for_Collection flow from unpackaged/post_collections_case_flow. This flow invokes the DetermineCaseReasonAndRelatedAttributes decision matrix as an action, which only exists once the matrix has an active version. The matrix is activated by seed_collections_case_matrix (Apex-seeded rows, not metadata), so this flow must deploy AFTER that seed — otherwise the deploy fails with "We can't find the DetermineCaseReasonAndRelatedAttributes action." Kept separate from deploy_post_collections for exactly this ordering reason.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_collections_case_flow`
 
 ---
 
@@ -1170,6 +1806,18 @@
 
 ---
 
+### `deploy_legacy_agents`
+
+**Description:** Deploy legacy-format agents (Bot + BotVersion + GenAiPlannerBundle) from unpackaged/post_agents/legacy. These agents deploy as standard metadata and do not require publish/activate steps — the BotVersion is included directly.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_agents/legacy`
+
+---
+
 ### `deploy_org_settings`
 
 **Description:** Deploy Org Settings
@@ -1220,7 +1868,7 @@
 
 ### `deploy_post_collections`
 
-**Description:** Deploy Collections metadata from unpackaged/post_collections (flows, objects, omniUiCard, permissionsets, queues, quickActions, tabs, timelineObjectDefinitions). Flexipages and applications for collections are deployed via assemble_and_deploy_ux (prepare_ux flow) — they are excluded here via .forceignore.
+**Description:** Deploy Collections metadata from unpackaged/post_collections (flows, objects, omniUiCard, permissionsets, queues, quickActions, tabs, timelineObjectDefinitions). Flexipages and applications for collections are deployed via assemble_and_deploy_ux (prepare_ux flow) — they are excluded here via .forceignore. The RLM_Create_Case_for_Collection flow is NOT here — it lives in unpackaged/post_collections_case_flow and is deployed by deploy_collections_case_flow AFTER seed_collections_case_matrix activates the decision matrix it invokes.
 
 **Class:** `cumulusci.tasks.salesforce.Deploy`
 
@@ -1242,6 +1890,42 @@
 
 ---
 
+### `deploy_post_inapp`
+
+**Description:** Deploy the In-App Learning navigation framework (objects, LWC, Apex, flexipages, Learning Home app)
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_inapp`
+
+---
+
+### `deploy_post_large_stx`
+
+**Description:** Deploy Large Sales Transaction metadata
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_large_stx`
+
+---
+
+### `deploy_post_payments_ext`
+
+**Description:** Deploy Payments UI extensions from unpackaged/post_payments_ext: the RLM_RefundController Apex class (native ConnectApi.Payments.refund, no callout) and its test, the rlmRefundButton LWC (Issue Refund on Payment records), and the RLM_Payments permission set (Apex class access). Kept in a separate dir from unpackaged/post_payments so it can deploy without re-deploying the immutable Payments_Webhook CustomSite. The Payment record page that hosts the button deploys via assemble_and_deploy_ux (payments flag).
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_payments_ext`
+
+---
+
 ### `deploy_post_personas`
 
 **Description:** Deploy persona metadata (profiles, permission set groups, permission sets) from unpackaged/post_personas.
@@ -1254,15 +1938,76 @@
 
 ---
 
-### `deploy_post_ramp_builder`
+### `deploy_post_prm_pricing_decision_tables`
 
-**Description:** Deploy all Ramp Schedule Builder (Create Ramp Schedule V4) metadata under unpackaged/post_ramp_builder: RLM_RampMode__c (Picklist) on QuoteLineGroup, QuoteLineItem, OrderItemGroup, and OrderItem; RLM_UpliftPercent__c (Percent) on QuoteLineGroup only; Lightning Message Channel (RLM_RampScheduleChannel); Apex classes and test classes (RLM_RampScheduleFlowAction, RLM_RampScheduleService, RLM_RampScheduleValidator, RLM_RampScheduleRequest, RLM_RampScheduleResponse, RLM_RampScheduleFlowException, RLM_RampMigrationQueueable, RLM_RampScheduleStatusController, RLM_QuoteLineItemDiscountUpliftHandler, RLM_QuoteLineItemRampModeHandler, RLM_QuoteLineItemRampHandler, and test classes); RLM_QuoteLineItemRampTrigger trigger; six LWC bundles (rlmRampScheduleFlowModalAction, rlmRampScheduleForm, rlmRampScheduleTrialSection, rlmRampSchedulePreviewTable, rlmRampScheduleStatus, rlmRampRefreshPage); the RLM_Create_Ramp_Schedule_V4 screen flow; the Quote.RLM_Create_Ramp_Schedule_V4 quick action; and the RLM_RampSchedule permission set (grants FLS on all custom fields and class access for all production Apex classes).
+**Description:** Deploy PRM pricing decision tables (RLM_Channel_Program_Level_Partner) from unpackaged/post_prm_pricing/decisionTables.
 
 **Class:** `cumulusci.tasks.salesforce.Deploy`
 
 **Options:**
 
-- `path`: `unpackaged/post_ramp_builder`
+- `path`: `unpackaged/post_prm_pricing/decisionTables`
+
+---
+
+### `deploy_post_prm_pricing_expression_sets`
+
+**Description:** Deploy PRM pricing expression set definitions (RLM_PRM_DISTI_Pricing_Procedure) from unpackaged/post_prm_pricing/expressionSetDefinition.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_prm_pricing/expressionSetDefinition`
+- `transforms`: `[{'transform': 'find_replace', 'options': {'patterns': [{'xpath': '//ExpressionSetDefinition/versions/variables/value...`
+
+---
+
+### `deploy_post_prm_pricing_flows`
+
+**Description:** Deploy PRM pricing automation flows (RLM_Create_New_Quote, RLM_Update_Channel_Program_Member) from unpackaged/post_prm_pricing/flows.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_prm_pricing/flows`
+
+---
+
+### `deploy_post_prm_pricing_objects`
+
+**Description:** Deploy PRM pricing custom fields (Account, Quote, QuoteLineItem, ChannelProgramLevel, ChannelProgramMember) from unpackaged/post_prm_pricing/objects.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_prm_pricing/objects`
+
+---
+
+### `deploy_post_prm_pricing_permissionsets`
+
+**Description:** Deploy PRM pricing permission sets (RLM_PRM_Pricing) from unpackaged/post_prm_pricing/permissionsets.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_prm_pricing/permissionsets`
+
+---
+
+### `deploy_post_setup_guide`
+
+**Description:** Deploy the QuantumBit Demo Setup guide (Visualforce page).
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_setup_guide`
 
 ---
 
@@ -1308,7 +2053,7 @@
 
 ### `enable_timeline`
 
-**Description:** Enable the Timeline feature toggle at Setup → Feature Settings → Timeline (Robot/Selenium). Required before billing_ui flexipages that reference industries_common:timeline can be deployed. Once enabled, this toggle cannot be disabled.
+**Description:** Enable the Timeline feature toggle at Setup → Feature Settings → Timeline (Robot/Selenium). Required before billing_ui flexipages that reference industries_common:timeline can be deployed. Once enabled, this toggle cannot be disabled. Skipped on TSO builds (tso=true), where Timeline is enabled via metadata (Industries.settings enableTimelinePref) instead of the UI toggle.
 
 **Class:** `tasks.rlm_enable_timeline.EnableTimeline`
 
@@ -1336,6 +2081,19 @@
 **Description:** Export constraint model data (ESDV, ESC, reference objects, blob) from org to local directory
 
 **Class:** `tasks.rlm_cml.ExportCML`
+
+---
+
+### `export_expression_set`
+
+**Description:** Export expression set definition from org to JSON via BRE Connect API
+
+**Class:** `tasks.rlm_expression_set_connect.ExportExpressionSet`
+
+**Options:**
+
+- `expression_set_api_name`: `None`
+- `output_file`: `None`
 
 ---
 
@@ -1374,6 +2132,7 @@
 - `contextTtl`: `30`
 - `defaultMapping`: `BSGEntitiesMapping`
 - `activate`: `True`
+- `allow_skip_if_unavailable`: `True`
 
 ---
 
@@ -1393,6 +2152,7 @@
 - `contextTtl`: `30`
 - `defaultMapping`: `CommerceCartMapping`
 - `activate`: `True`
+- `allow_skip_if_unavailable`: `True`
 
 ---
 
@@ -1412,6 +2172,7 @@
 - `contextTtl`: `30`
 - `defaultMapping`: `CollectionPlanContextMapping`
 - `activate`: `True`
+- `allow_skip_if_unavailable`: `True`
 
 ---
 
@@ -1431,6 +2192,7 @@
 - `contextTtl`: `30`
 - `defaultMapping`: `OppToCntrPersistenceMapping`
 - `activate`: `True`
+- `allow_skip_if_unavailable`: `True`
 
 ---
 
@@ -1450,6 +2212,7 @@
 - `contextTtl`: `30`
 - `defaultMapping`: `DocExtrctPersistenceMapping`
 - `activate`: `True`
+- `allow_skip_if_unavailable`: `True`
 
 ---
 
@@ -1469,6 +2232,7 @@
 - `contextTtl`: `30`
 - `defaultMapping`: `FulfillAssetEntitiesMapping`
 - `activate`: `True`
+- `allow_skip_if_unavailable`: `True`
 
 ---
 
@@ -1507,6 +2271,7 @@
 - `contextTtl`: `30`
 - `defaultMapping`: `DefaultUsageMapping`
 - `activate`: `True`
+- `allow_skip_if_unavailable`: `True`
 
 ---
 
@@ -1526,6 +2291,7 @@
 - `contextTtl`: `30`
 - `defaultMapping`: `CatalogMapping`
 - `activate`: `True`
+- `allow_skip_if_unavailable`: `True`
 
 ---
 
@@ -1576,11 +2342,38 @@
 
 ---
 
+### `fix_scratch_org_identity`
+
+**Description:** Repair scratch-org identity in the local SF CLI auth file. Works around an SF CLI bug where Enterprise-Edition scratch orgs created via the DevHub API get isScratch=false in ~/.sfdx/<username>.json, making scratch-only commands (sf org create user, sf org generate password) fail with NonScratchOrgError. Sets isScratch=true (when false or missing) only when a devHubUsername is present. Idempotent; warns and continues on failure unless raise_on_failure is set.
+
+**Class:** `tasks.rlm_fix_scratch_identity.FixScratchOrgIdentity`
+
+---
+
 ### `import_cml`
 
 **Description:** Import constraint model metadata, ESC associations, and ConstraintModel blob into org
 
 **Class:** `tasks.rlm_cml.ImportCML`
+
+---
+
+### `import_expression_set`
+
+**Description:** Import (create or replace) expression set definition from JSON via BRE Connect API
+
+**Class:** `tasks.rlm_expression_set_connect.ImportExpressionSet`
+
+**Options:**
+
+- `input_file`: `None`
+- `dry_run`: `False`
+- `skip_validation`: `False`
+- `normalize_html_entities`: `True`
+- `activate_after_import`: `True`
+- `cascade_deactivate_procedure_plan`: `True`
+- `max_wait_seconds`: `45`
+- `poll_interval_seconds`: `3`
 
 ---
 
@@ -1644,18 +2437,6 @@
 
 ---
 
-### `insert_q3_data`
-
-**Description:** Insert Q3 Data
-
-**Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
-
-**Options:**
-
-- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-multicurrency`
-
----
-
 ### `insert_q3_dro_data_prod`
 
 **Description:** Insert Q3 DRO Data to Production
@@ -1679,6 +2460,30 @@
 
 - `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-dro`
 - `dynamic_assigned_to_user`: `True`
+
+---
+
+### `insert_q3_pcm_data`
+
+**Description:** Insert Q3 PCM (product catalog) Data
+
+**Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-pcm`
+
+---
+
+### `insert_q3_pricing_data`
+
+**Description:** Insert Q3 Pricing Data
+
+**Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-pricing`
 
 ---
 
@@ -1767,18 +2572,6 @@
 
 ---
 
-### `insert_qb_guidedselling_data`
-
-**Description:** Insert QuantumBit Guided Selling Data
-
-**Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
-
-**Options:**
-
-- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-guidedselling`
-
----
-
 ### `insert_qb_guidedselling_products_data`
 
 **Description:** Update QuantumBit guided selling Product2 field values
@@ -1863,6 +2656,18 @@
 
 ---
 
+### `insert_quantumbit_prm_pricing_data`
+
+**Description:** Insert QuantumBit PRM pricing overlay data using a 3-pass SFDMU plan. Pass 1 upserts scoped Accounts, ChannelProgram, and ChannelProgramLevel records. Pass 2 updates IsPartner state and upserts ChannelProgramMember records. Pass 3 updates Account self-lookups after both sides of the relationship exist.
+
+**Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-prm-pricing`
+
+---
+
 ### `insert_quantumbit_product_image_data`
 
 **Description:** Insert QuantumBit Product Image Data
@@ -1896,6 +2701,18 @@
 **Options:**
 
 - `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-tax`
+
+---
+
+### `load_inapp_dataset`
+
+**Description:** Load In-App Learning navigation content (Pages/Sections/Blocks/DynamicLinks) via SFDMU
+
+**Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/inapp`
 
 ---
 
@@ -2028,6 +2845,14 @@
 
 ---
 
+### `publish_agents`
+
+**Description:** Compile each AiAuthoringBundle under unpackaged/post_agents/aiAuthoringBundles into a runnable BotVersion via `sf agent publish authoring-bundle`. Deploying the bundle metadata alone does not produce a BotVersion; this step does.
+
+**Class:** `tasks.rlm_publish_agents.PublishAgents`
+
+---
+
 ### `query_billing_state`
 
 **Description:** Query billing record state (PaymentTerm, BillingTreatment, BillingPolicy, BillingTreatmentItem) for validation; check debug logs for output.
@@ -2037,6 +2862,14 @@
 **Options:**
 
 - `path`: `scripts/apex/query_billing_state.apex`
+
+---
+
+### `rebuild_search_index`
+
+**Description:** Rebuild the Product Catalog (PCM) search index via Connect API (FULL, IMMEDIATE). Asynchronous - initiates the build and logs the snapshot id. Warns and continues on API failure unless raise_on_failure is set.
+
+**Class:** `tasks.rlm_rebuild_search_index.RebuildSearchIndex`
 
 ---
 
@@ -2057,6 +2890,18 @@
 - `retry_delay_seconds`: `120`
 - `post_trigger_delay_seconds`: `90`
 - `use_tooling_api`: `False`
+
+---
+
+### `recalculate_personas_sales_rep_psg`
+
+**Description:** Recalculate the RLM_Sales_Representative permission set group before user assignment.
+
+**Class:** `tasks.rlm_recalculate_permission_set_groups.RecalculatePermissionSetGroups`
+
+**Options:**
+
+- `api_names`: `['RLM_Sales_Representative']`
 
 ---
 
@@ -2090,7 +2935,7 @@
 
 ### `refresh_dt_commerce`
 
-**Description:** Refresh Commerce Decision Tables (when commerce flag is true)
+**Description:** Refresh Commerce Decision Tables. Run by refresh_all_decision_tables when the commerce OR tso flag is true — a TSO template ships these tables regardless of the commerce flag, so a TSO build must refresh them or it inherits the template org's rows.
 
 **Class:** `tasks.rlm_refresh_decision_table.RefreshDecisionTable`
 
@@ -2121,6 +2966,18 @@
 **Options:**
 
 - `developerNames`: `['Asset_Action_Source_Entries_Decision_Table_V2', 'Derived_Pricing_Entries_Decision_Table']`
+
+---
+
+### `refresh_dt_prm_pricing`
+
+**Description:** Refresh PRM pricing decision tables (RLM_Channel_Program_Level_Partner). Run when prm and prm_pricing flags are both true.
+
+**Class:** `tasks.rlm_refresh_decision_table.RefreshDecisionTable`
+
+**Options:**
+
+- `developerNames`: `['RLM_Channel_Program_Level_Partner']`
 
 ---
 
@@ -2168,6 +3025,54 @@
 
 ---
 
+### `seed_collections_case_matrix`
+
+**Description:** Seed and activate the Collections "Create Case for Collection" BRE setup: the five sample CollectionPlanReason records (CPR01-CPR05) and the DetermineCaseReasonAndRelatedAttributes decision matrix rows (Code -> Reason/Priority/Type), then activate the matrix version. Idempotent; includes a runtime self-check. Run after deploy_post_collections (which deploys the DecisionMatrixDefinition schema). See scripts/apex/seedCollectionsCaseMatrix.apex.
+
+**Class:** `cumulusci.tasks.apex.anon.AnonymousApexTask`
+
+**Options:**
+
+- `path`: `scripts/apex/seedCollectionsCaseMatrix.apex`
+
+---
+
+### `seed_large_deal_billing_treatment`
+
+**Description:** Seed the large-deal Exclude-from-Billing policy + treatment (Default selection, no legal entity, no items). The large_stx Prepare-for-Activation flow stamps this treatment onto large-deal order items so billing-treatment resolution becomes a no-op and bypasses the non-bulk-safe legal-entity resolver. Idempotent.
+
+**Class:** `cumulusci.tasks.apex.anon.AnonymousApexTask`
+
+**Options:**
+
+- `path`: `scripts/apex/seedLargeDealBillingTreatment.apex`
+
+---
+
+### `set_personas_org_wide_defaults`
+
+**Description:** Sets Organization-Wide Defaults for the Sales Rep persona. Sales Cloud objects Account/Asset/Contract/Order → internal Read/Write (all internal users can see and edit); Opportunity stays Private (reps own their pipeline). The product / configuration model (ProductCatalog plus the catalog/config objects below) → Read/Read so the salesrep can browse catalogs and run the Set Up Quote configurator — the PST configuration-rule engine reads those records in the running user's context. Restores the OWD the deleted post_sharing object-meta bundle used to set.
+
+**Class:** `tasks.rlm_sharing.SetOrgWideDefaultsSharingOnly`
+
+**Options:**
+
+- `org_wide_defaults`: `[{'api_name': 'Account', 'internal_sharing_model': 'ReadWrite', 'external_sharing_model': 'Private'}, {'api_name': 'A...`
+
+---
+
+### `set_scratch_org_password`
+
+**Description:** Set a permanent password for the scratch-org admin user and clear the "change password at next login" flag. Prevents the frontdoor login used by Robot setup steps (sf org open --url-only) from being redirected to the "Change Your Password" screen, which would otherwise break prepare_docgen and other UI-toggle steps. Scratch-org only.
+
+**Class:** `cumulusci.tasks.apex.anon.AnonymousApexTask`
+
+**Options:**
+
+- `path`: `scripts/apex/setScratchOrgPassword.apex`
+
+---
+
 ### `stamp_git_commit`
 
 **Description:** Stamps the current git commit hash, branch, timestamp, org definition, dirty-tree flag, and active feature flags into the org as a Custom Metadata Type record (RLM_Build_Info__mdt.Latest). Non-fatal: deploy failures are logged as warnings so this task never breaks a completed flow.
@@ -2185,6 +3090,30 @@
 **Description:** Sync Pricing Data
 
 **Class:** `tasks.rlm_sync_pricing_data.SyncPricingData`
+
+---
+
+### `test_agents`
+
+**Description:** Run Agentforce CLI Testing Center specs against published+activated agents. Use the agent option to run one suite (billing or quoting-assistant) or all suites in one explicit invocation; use test_files to run a comma-separated subset of YAML specs. Deploys each selected spec as an AiEvaluationDefinition (`sf agent test create`) and runs it (`sf agent test run`), failing if any topic/action assertion — or any output validation on a case that set an expectedOutcome — does not pass. Requires the target agent to be published and activated first (see prepare_agents). Not part of prepare_agents; run only on demand or in CI after activation.
+
+**Class:** `tasks.rlm_test_agents.TestAgents`
+
+**Options:**
+
+- `agent`: `quoting-assistant`
+
+---
+
+### `test_quoting_assistant`
+
+**Description:** Convenience alias for `test_agents -o agent quoting-assistant`. Runs the Quoting Assistant (RLM_Quoting_Assistant) Agentforce CLI Testing Center specs on demand against a published and activated agent.
+
+**Class:** `tasks.rlm_test_agents.TestAgents`
+
+**Options:**
+
+- `agent`: `quoting-assistant`
 
 ---
 
@@ -2220,17 +3149,55 @@
 
 ---
 
+### `validate_expression_set`
+
+**Description:** Validate an expression set definition or overlay JSON against the BRE schema (enums, required keys, duplicate params, sequence/placement). No org needed. Auto-detects overlay vs definition; pass kind to force.
+
+**Class:** `tasks.rlm_expression_set_connect.ValidateExpressionSet`
+
+**Options:**
+
+- `file`: `None`
+- `kind`: `None`
+- `strict`: `False`
+
+---
+
+### `validate_multicurrency_rates`
+
+**Description:** Validate the multicurrency usage-rating configuration, scoped to the QuantumBit usage SKUs. Design-time checks (all 7 expected CURRENCY units exist, every RateCardEntry has a RateUnitOfMeasure, every Tier RateCardEntry has a tier adjustment, no Pack product carries a ProductUsageResourcePolicy, every ProductUsageResource is rated, every currency-denominated entry covers all 7 currencies) plus runtime checks (AssetRateCardEntry currency alignment, and per-asset entitlement shape compared across assets of the same product) which self-skip when no assets exist. Offline equivalent: python tests/test_qb_multicurrency_data.py
+
+**Class:** `tasks.rlm_apex_file.FileBasedAnonymousApexTask`
+
+**Options:**
+
+- `path`: `scripts/apex/validateMulticurrencyRates.apex`
+
+---
+
 ### `validate_setup`
 
-**Description:** Validate the local developer setup for rlm-base-dev. Checks Python, CumulusCI, Salesforce CLI, SFDMU plugin version (v5+ required), Node.js, Robot Framework, SeleniumLibrary, webdriver-manager, Chrome/Chromium, ChromeDriver, and urllib3. When auto_fix=true the SFDMU plugin is automatically installed or updated to the required version. Run without an org: cci task run validate_setup
+**Description:** Validate the local developer setup for rlm-base-dev. Checks Python, CumulusCI, Salesforce CLI, SFDMU plugin version (v5.6.4+ required), Node.js, Robot Framework, SeleniumLibrary, webdriver-manager, Chrome/Chromium, ChromeDriver, and urllib3. When auto_fix=true the SFDMU plugin is automatically installed or updated to the required version. Run without an org: cci task run validate_setup
 
 **Class:** `tasks.rlm_validate_setup.ValidateSetup`
 
 **Options:**
 
 - `auto_fix`: `True`
-- `required_sfdmu_version`: `5.0.0`
+- `required_sfdmu_version`: `5.6.4`
 - `fail_on_error`: `True`
+
+---
+
+### `verify_personas_org_wide_defaults`
+
+**Description:** Post-set verification: asserts the persona Org-Wide Defaults actually landed (raises if any present object's internal/external sharing model does not match the expected spec). Objects absent on the target org shape are skipped, matching set_personas_org_wide_defaults' shape tolerance.
+
+**Class:** `tasks.rlm_sharing.AssertSObjectOWDs`
+
+**Options:**
+
+- `org_wide_defaults`: `[{'api_name': 'Account', 'internal_sharing_model': 'ReadWrite', 'external_sharing_model': 'Private'}, {'api_name': 'A...`
 
 ---
 
@@ -2285,7 +3252,7 @@
 
 ## Uncategorized
 
-*27 task(s)*
+*26 task(s)*
 
 ### `create_partner_central`
 
@@ -2513,7 +3480,7 @@
 
 ### `deploy_post_tso`
 
-**Description:** Deploy Trialforce Source Org Metadata (App Launcher now deploys via prepare_ux/assemble_and_deploy_ux)
+**Description:** Deploy Trialforce Source Org Metadata (App Launcher order is applied separately by reorder_app_launcher in prepare_ux, not here)
 
 **Class:** `cumulusci.tasks.salesforce.Deploy`
 
@@ -2547,21 +3514,9 @@
 
 ---
 
-### `deploy_sharing_rules`
-
-**Description:** Deploy Sharing Rules
-
-**Class:** `cumulusci.tasks.salesforce.Deploy`
-
-**Options:**
-
-- `path`: `unpackaged/post_sharing`
-
----
-
 ### `enable_analytics_replication`
 
-**Description:** Enable CRM Analytics replication via browser automation (Robot/Selenium, Analytics Settings VF iframe)
+**Description:** Enable CRM Analytics via browser automation (Robot/Selenium, clicks "Enable CRM Analytics" on InsightsSetupGettingStarted/home; VF iframe approach removed in 262)
 
 **Class:** `tasks.rlm_analytics.EnableAnalyticsReplication`
 

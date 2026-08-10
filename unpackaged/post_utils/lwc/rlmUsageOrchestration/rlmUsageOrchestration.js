@@ -13,7 +13,7 @@ import startOrchestration from '@salesforce/apex/RLM_UsageOrchestrationControlle
 
 export default class RlmUsageOrchestration extends LightningElement {
     // Configuration
-    @api orchestrationFlowApiName = 'RLM_Orchestrate_Usage_Management';
+    @api orchestrationFlowApiName = 'RLM_OrchestrateUsageManagement';
 
     isStarting = false;
 
@@ -43,11 +43,6 @@ export default class RlmUsageOrchestration extends LightningElement {
         } finally {
             this.isStarting = false;
         }
-    }
-
-    handleMonitorWorkflow() {
-        // Open Setup page in a new tab so users keep their current record context.
-        window.open('/lightning/setup/MonitorWorkflowServices/home', '_blank');
     }
 
     // ─── Utilities ──────────────────────────────────────────────────────

@@ -15,7 +15,7 @@ Options:
     auto_fix                Auto-update SFDMU if outdated (default: true)
     auto_fix_robot          Auto-install robot deps via pipx inject if missing (default: true)
     auto_fix_urllib3        Auto-install/upgrade urllib3 if missing or outdated (default: false)
-    required_sfdmu_version  Minimum SFDMU version (default: 5.0.0)
+    required_sfdmu_version  Minimum SFDMU version (default: 5.6.4)
     fail_on_error           Raise on required check failures (default: true)
 """
 import json
@@ -34,10 +34,19 @@ except ImportError:
     TaskOptionsError = Exception  # type: ignore[assignment,misc]
 
 # ── minimum required versions ────────────────────────────────────────────────
-MIN_PYTHON: Tuple[int, ...] = (3, 8)
+# Bumped 3.8 -> 3.10 to match the schema-diff / skill-manifest scripts which
+# use PEP 604 union syntax (`X | None`, `list[Path]`). The CI workflow pins
+# 3.13 and `docs/guides/dev-environment-setup.md` defaults to 3.13 already,
+# so 3.10 is a generous floor.
+MIN_PYTHON: Tuple[int, ...] = (3, 10)
 MIN_CCI: Tuple[int, ...] = (4, 0, 0)
 MIN_SF_MAJOR: int = 2
-MIN_SFDMU_DEFAULT: str = "5.0.0"
+# 5.6.4 is the floor (not just 5.x): 5.6.4 fixed upsert matching for
+# relationship externalIds (5.6.4 release, commit 50be987) — qb-prm/qb-prm-pricing upserts
+# ChannelProgramMember on Partner.Name;Program.Name and duplicates it on every
+# rerun with older plugins — and 5.6.3 fixed the #N/A/N/A null-token
+# semantics the extraction post-processing relies on.
+MIN_SFDMU_DEFAULT: str = "5.6.4"
 MIN_URLLIB3: Tuple[int, ...] = (2, 6, 3)
 MIN_URLLIB3_STR: str = "2.6.3"
 MIN_SELENIUM: Tuple[int, ...] = (4, 10)

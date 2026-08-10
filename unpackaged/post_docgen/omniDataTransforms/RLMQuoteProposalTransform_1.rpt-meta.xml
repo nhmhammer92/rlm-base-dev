@@ -103,7 +103,7 @@
   } ],
   &quot;QuoteNumber&quot; : &quot;00000024&quot;,
   &quot;BillingStreet&quot; : &quot;10 Main Rd.&quot;,
-  &quot;ExpirationDate&quot; : &quot;04/11/2026&quot;,
+  &quot;ExpDate&quot; : &quot;04/11/2026&quot;,
   &quot;GrandTotal&quot; : &quot;$98,225.00&quot;,
   &quot;CreatedDate&quot; : &quot;03/12/2026&quot;,
   &quot;BillingPostalCode&quot; : &quot;31349&quot;,
@@ -300,6 +300,20 @@
         <name>RLMQuoteProposalTransform</name>
         <outputCreationSequence>1.0</outputCreationSequence>
         <outputFieldName>Line:CQL:CQL2:Discount</outputFieldName>
+        <outputObjectName>json</outputObjectName>
+        <requiredForUpsert>false</requiredForUpsert>
+        <upsertKey>false</upsertKey>
+    </omniDataTransformItem>
+    <omniDataTransformItem>
+        <disabled>false</disabled>
+        <filterGroup>0.0</filterGroup>
+        <globalKey>06667270-aa96-444a-8788-f73e6a1a92b4</globalKey>
+        <inputFieldName>Line:CQL:Discount</inputFieldName>
+        <inputObjectQuerySequence>0.0</inputObjectQuerySequence>
+        <linkedObjectSequence>0.0</linkedObjectSequence>
+        <name>RLMQuoteProposalTransform</name>
+        <outputCreationSequence>1.0</outputCreationSequence>
+        <outputFieldName>Line:CQL:Discount</outputFieldName>
         <outputObjectName>json</outputObjectName>
         <requiredForUpsert>false</requiredForUpsert>
         <upsertKey>false</upsertKey>
@@ -587,7 +601,7 @@
         <linkedObjectSequence>0.0</linkedObjectSequence>
         <name>RLMQuoteProposalTransform</name>
         <outputCreationSequence>1.0</outputCreationSequence>
-        <outputFieldName>ExpirationDate</outputFieldName>
+        <outputFieldName>ExpDate</outputFieldName>
         <outputObjectName>json</outputObjectName>
         <requiredForUpsert>false</requiredForUpsert>
         <upsertKey>false</upsertKey>

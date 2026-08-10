@@ -2,6 +2,8 @@
 
 SFDMU data plan for QuantumBit (QB) rate cards, rate card entries, and tiered rate adjustments. Defines the pricing rates used by the usage rating engine to calculate charges for QB products.
 
+> **SFDMU 5.6.4+ floor.** RateCardEntry and RateAdjustmentByTier use `Insert` + `deleteOldData: true`, and PriceBookRateCard uses `Upsert` + `deleteOldData: true` — pre-5.6.4 workarounds for relationship-traversal externalId matching (multi-hop traversal keys produced invalid Upsert SOQL; all-traversal composite keys never matched target records). Those bugs are **fixed at/below the 5.6.4 floor**; the shipped plan keeps the workarounds deliberately. Restoring plain `Upsert` / dropping `deleteOldData` is the gated `sfdmu-v5-optimization` initiative — do not flip operations without live verification and explicit approval.
+
 ## CCI Integration
 
 ### Flow: `prepare_rating`
@@ -41,13 +43,13 @@ PriceBookRateCard, RateAdjustmentByTier      (RateCardEntry -> Active)
 
 | # | Object               | Operation | External ID                                                                          | Records |
 |---|----------------------|-----------|--------------------------------------------------------------------------------------|---------|
-| 1 | Product2             | Update    | `StockKeepingUnit`                                                                   | 164     |
+| 1 | Product2             | Update    | `StockKeepingUnit`                                                                   | 10       |
 | 2 | RateCard             | Upsert    | `Name;Type`                                                                          | 3       |
-| 3 | PriceBookRateCard    | Upsert    | `PriceBook.Name;RateCard.Name;RateCardType`                                          | 2       |
-| 4 | RateCardEntry        | Upsert    | `Product.StockKeepingUnit;RateCard.Name;UsageResource.Code;RateUnitOfMeasure.UnitCode` | 19     |
-| 5 | RateAdjustmentByTier | Upsert    | `Product.StockKeepingUnit;RateCard.Name;RateUnitOfMeasure.UnitCode;UsageResource.Code;LowerBound;UpperBound` | 21 |
+| 3 | PriceBookRateCard    | Upsert (+deleteOldData) | `PriceBook.Name;RateCard.Name;RateCardType`                                          | 2       |
+| 4 | RateCardEntry        | Insert (+deleteOldData) | `Product.StockKeepingUnit;RateCard.Name;UsageResource.Code;RateUnitOfMeasure.UnitCode` | 126    |
+| 5 | RateAdjustmentByTier | Insert (+deleteOldData) | `Product.StockKeepingUnit;RateCardEntry.RateCard.Name;RateUnitOfMeasure.UnitCode;UsageResource.Code;LowerBound;UpperBound` | 128 |
 
-**Note:** Product2 is an `Update` operation — it only sets `UsageModelType` on existing products (created by qb-pcm). RateCardEntry records are inserted in `Draft` status. RateAdjustmentByTier uses `RateCard.Name` (portable) in its composite key instead of `RateCardEntry.Name` (auto-numbered), with a separate `RateCardEntry.$$...` column in the CSV for parent RCE lookup resolution.
+**Note:** Product2 is an `Update` operation — it only sets `UsageModelType` on existing products (created by qb-pcm). RateCardEntry records are inserted in `Draft` status. RateAdjustmentByTier keys on `RateCardEntry.RateCard.Name` (traversing the parent RateCardEntry to its RateCard's portable `Name`) instead of `RateCardEntry.Name` (auto-numbered), with a separate `RateCardEntry.$$...` column in the CSV for parent RCE lookup resolution.
 
 ### Lookup Reference CSVs
 
@@ -60,6 +62,36 @@ The following CSVs are included for SFDMU lookup resolution only (they are not l
 | UnitOfMeasure.csv      | UoM references for rate units                          |
 | UnitOfMeasureClass.csv | UoM class references for default/rate UoM classes      |
 | UsageResource.csv      | Usage resource references for RateCardEntry            |
+
+## Reloading rates outside a full build — refresh the decision tables
+
+Rate resolution at runtime goes through decision tables
+(`Rate_Card_Entry_Resolution*`, `Asset_Rate_Decision_Table*`, …), which cache the
+rate data. **Loading rates does not refresh them.** A full `prepare_rlm_org` is
+safe because `refresh_all_decision_tables` runs near the end, after
+`prepare_rating` — but `prepare_rating` on its own stops at `activate_rates`, so
+an ad-hoc reload leaves the tables holding the *previous* rates and rating keeps
+using the old values with no error anywhere.
+
+After reloading this plan by itself, run:
+
+```bash
+cci task run refresh_dt_rating
+cci task run refresh_dt_rating_discovery
+```
+
+Note these tasks take **no `--org` flag** (like `activate_rates`, they are plain
+`BaseTask`s without `salesforce_task = True`) — they run against the CCI *default*
+org, so set the default org before running them.
+
+Two more ordering rules for an ad-hoc reload:
+
+1. **Reset the accounts first.** `AssetRateCardEntry` records reference the active
+   `RateCardEntry` rows, so the load cannot delete them and instead inserts a
+   second, `Draft` copy of every entry — leaving duplicate Draft + Active pairs
+   with different rates.
+2. **Activate after loading** (`cci task run activate_rates`); entries load as
+   `Draft` and a Draft entry is invisible to rating.
 
 ## Apex Activation Script
 
@@ -94,7 +126,59 @@ The script is **idempotent** — re-running on already-activated entries is a sa
 | Standard Price Book  | Base Rate Card  | —    |
 | Standard Price Book  | Tier Rate Card  | —    |
 
-## Rate Card Entries (19 records)
+## Multicurrency: the rate's currency is its `RateUnitOfMeasure`
+
+**No rate object has a `CurrencyIsoCode`.** A rate is denominated by its
+`RateUnitOfMeasure` — a unit in the **`CURRENCY`** `UnitOfMeasureClass`. So a GBP
+quote can only rate if a **GBP-denominated `RateCardEntry` exists**; there is no
+runtime conversion from the USD entry. Each currency therefore needs:
+
+1. a `CURRENCY`-class `UnitOfMeasure` whose `UnitCode` is the ISO code — these live in
+   the **qb-rating** plan (`UnitOfMeasure.csv`: USD, GBP, EUR, AUD, CAD, CHF, JPY); and
+2. its own `RateCardEntry` (plus matching `RateAdjustmentByTier` rows) in **both** rate cards.
+
+| Denomination | Entries | Per currency? |
+|--------------|---------|---------------|
+| Currency (`RateUnitOfMeasure` = USD/GBP/EUR/AUD/CAD/CHF/JPY) | 15 per currency — 6 Base + 9 Tier | **Yes** — 15 × 7 = 105 |
+| Token (`RateUnitOfMeasure` = `TOKEN-UOM`) | 11 | **No** — token-denominated rates are in tokens, not money |
+
+That is the 116 total. `RateAdjustmentByTier` follows its parent entry: 15 currency-denominated
+rows × 7 = 105, plus 13 token-denominated = 118.
+
+**Generated by `scripts/expand_currency_rates_data.py`** (dry-run by default; `--apply` to write):
+
+```bash
+python scripts/expand_currency_rates_data.py --apply
+```
+
+Conversion rules it applies:
+
+- `Rate` and **`Override`** `AdjustmentValue` are money → converted via `CurrencyType.ConversionRate`.
+- **`Percentage`** `AdjustmentValue` is currency-neutral → copied unchanged.
+- `LowerBound` / `UpperBound` are **consumption quantities** (minutes, TB, tokens), not money → never converted.
+- Rounding: 2 decimals at or above 1, 4 decimals below 1 so small per-unit rates such as `0.004` stay
+  distinct. Whole-unit currencies (JPY) round to a whole yen **only at or above ¥1** — a sub-yen rate
+  keeps 2 decimals, because rounding ¥0.65/¥0.73/¥0.82/¥0.98 to a whole yen would flatten every tier
+  of a tiered rate onto the same value.
+- Every non-USD row is **regenerated from the base**. That is the default because this dataset is
+  fully derived: `check_rates_derived_from_base` requires each non-base rate to equal the derived
+  value exactly with an **empty** deviation allowlist, so preserving old rows would silently ship
+  stale rates the moment `CurrencyType.ConversionRate` changes — the canonical `--apply` above would
+  write nothing and the suite would then fail. Pass **`--preserve`** to fill in only the missing
+  (product, rate card, usage resource, currency) combinations; anything kept that way must be added
+  to `ALLOWED_RATE_DEVIATIONS` as a conscious, documented choice.
+
+✅ **Every non-base rate is generator-derived — no hand-set values remain.** QB-DB's GBP rates are
+the converted `0.003 / 7.48 / 0.0748` and JPY the converted `0.65 / 1631 / 16`; the six hand-seeded
+placeholders that previously mirrored USD were corrected. `tests/test_qb_multicurrency_data.py::`
+`check_rates_derived_from_base` now enforces exact derivation with an **empty**
+`ALLOWED_RATE_DEVIATIONS`, so reintroducing a hand-tuned rate fails the suite until it is added to
+that allowlist as a conscious, documented choice.
+
+## Rate Card Entries (126 records)
+
+> The tables below list the **USD** rows. Every currency-denominated entry also exists in
+> GBP, EUR, AUD, CAD, CHF and JPY; only the `TOKEN-UOM` rows are single-currency.
 
 ### Base Rate Card Entries (flat per-unit rates)
 
@@ -102,10 +186,12 @@ The script is **idempotent** — re-running on already-activated entries is a sa
 |------------------|-----------------|----------|----------|
 | QB-DB            | UR-CPUTIME      | USD      | $0.004   |
 | QB-DB            | UR-DATASTORAGE  | USD      | $10.00   |
+| QB-DB            | UR-DATAXFR      | USD      | $0.10    |
 | QB-DB-TOKEN      | QB-TOKEN        | USD      | $0.50    |
 | QB-DB-TOKEN      | UR-CPUTIME      | TOKEN-UOM| 5 tokens |
 | QB-DB-TOKEN      | UR-DATASTORAGE  | TOKEN-UOM| 10 tokens|
 | QB-TOKENS-PACK   | QB-TOKEN        | USD      | $0.33    |
+| QB-DAT-THPT      | UR-DATAXFR      | USD      | $0.10    |
 
 ### Tier Rate Card Entries (rate determined by RateAdjustmentByTier)
 
@@ -116,16 +202,28 @@ The script is **idempotent** — re-running on already-activated entries is a sa
 | QB-CMT-TKN-EACH | QB-TOKEN        | TOKEN-UOM | Term Annual   |
 | QB-CMT-TKN-EACH | UR-CPUTIME      | TOKEN-UOM | Term Annual   |
 | QB-CMT-TKN-EACH | UR-DATASTORAGE  | TOKEN-UOM | Term Annual   |
-| QB-CMT-TKN-FLAT | (no resource)   | TOKEN-UOM | Term Annual   |
+| QB-CMT-TKN-FLAT | QB-TOKEN        | TOKEN-UOM | Term Annual   |
 | QB-CMT-TKN-FLAT | QB-TOKEN        | USD       | Term Annual   |
-| QB-CMT-TKN-TIER | (no resource)   | TOKEN-UOM | Term Annual   |
+| QB-CMT-TKN-FLAT | UR-CPUTIME-TKN     | TOKEN-UOM | Term Annual   |
+| QB-CMT-TKN-FLAT | UR-DATASTORAGE-TKN | TOKEN-UOM | Term Annual   |
+| QB-CMT-TKN-TIER | QB-TOKEN        | TOKEN-UOM | Term Annual   |
 | QB-CMT-TKN-TIER | QB-TOKEN        | USD       | Term Annual   |
+| QB-CMT-TKN-TIER | UR-CPUTIME-TKN     | TOKEN-UOM | Term Annual   |
+| QB-CMT-TKN-TIER | UR-DATASTORAGE-TKN | TOKEN-UOM | Term Annual   |
+| QB-CMT-TKN-BND  | QB-TOKEN        | TOKEN-UOM | Term Annual   |
+| QB-CMT-TKN-BND  | QB-TOKEN        | USD       | Term Annual   |
+| QB-CMT-TKN-BND  | UR-CPUTIME-TKN     | TOKEN-UOM | Term Annual   |
+| QB-CMT-TKN-BND  | UR-DATASTORAGE-TKN | TOKEN-UOM | Term Annual   |
 | QB-MTY-CMT       | UR-CPUTIME      | USD       | Term Annual   |
 | QB-MTY-CMT       | UR-DATASTORAGE  | USD       | Term Annual   |
 | QB-QTY-CMT       | UR-CPUTIME      | USD       | Term Annual   |
 | QB-QTY-CMT       | UR-DATASTORAGE  | USD       | Term Annual   |
 
-## Rate Adjustments by Tier (21 records)
+> **`UsageResource` is required for rating (2026-07-23 fix).** The QB-CMT-TKN-FLAT / QB-CMT-TKN-TIER `TOKEN-UOM` rows previously had a blank `UsageResource`. `RateCardEntry.UsageResourceId` is non-nillable and every rate/adjustment lookup in the rating procedures (`RLM_DefaultRatingProcedure`, `Negotiable_Rating_Procedure`) keys on `UsageResource`, so a blank-resource entry is never selected — those two products' commit discounts (flat 10% / 10-20-30% tiers) applied to nothing. Since the tiers are token-denominated, the resource was first set to the aggregate **`QB-TOKEN`** (mirroring QB-CMT-TKN-EACH's `QB-TOKEN;TOKEN-UOM` row); `RateAdjustmentByTier` rows were updated to match.
+>
+> **Superseded 2026-07-24 — discounts moved to the `Category=Usage` resources.** A `Category=Token` resource accepts only **one** tier adjustment, so TIER's volume bands could not live on `QB-TOKEN`; and the fresh-build **Usage Product Validator** then flagged QB-CMT-TKN-FLAT with *"No effective rate card entry available for the product usage resource"* because its `UR-CPUTIME-TKN` / `UR-DATASTORAGE-TKN` PURs had no rate card entry at all (its two RCEs both sat on `QB-TOKEN`). Both FLAT and TIER now follow one rule: **the discount sits on the `Category=Usage` resources where consumption is rated, and the `Category=Token` aggregate is held neutral at 0%.** FLAT = one unbounded 10% tier per usage resource; TIER = 10/20/30% volume bands. QB-CMT-TKN-EACH predates this and still carries non-zero adjustments on all three resources. Requires a live rating run to confirm the discount applies before merge.
+
+## Rate Adjustments by Tier (128 records)
 
 ### QB-DB — Compute Time (Override tiers, USD/minute)
 
@@ -153,21 +251,30 @@ The script is **idempotent** — re-running on already-activated entries is a sa
 | UR-DATASTORAGE  | 4%         |
 | QB-TOKEN        | 6%         |
 
-### QB-CMT-TKN-FLAT (Percentage tiers)
+### QB-CMT-TKN-FLAT (Flat percentage on the token-backed **usage** resources)
 
-| Resource   | Adjustment |
-|------------|------------|
-| (flat)     | 10%        |
-| QB-TOKEN   | 0%         |
+Same placement rule as QB-CMT-TKN-TIER below — the discount sits on the `Category=Usage` resources (where consumption is rated), and the `Category=Token` aggregate stays neutral. FLAT differs from TIER only in shape: **one** unbounded tier per resource instead of volume bands.
 
-### QB-CMT-TKN-TIER (Volume tiers, tokens)
+| Resource (TOKEN-UOM) | Lower Bound | Upper Bound | Adjustment |
+|----------------------|-------------|-------------|------------|
+| UR-CPUTIME-TKN       | 0           | (unlimited) | 10%        |
+| UR-DATASTORAGE-TKN   | 0           | (unlimited) | 10%        |
+| QB-TOKEN             | 0           | (unlimited) | 0% (neutral) |
+| QB-TOKEN (USD)       | 0           | (unlimited) | 0% (neutral) |
 
-| Lower Bound | Upper Bound | Adjustment |
-|-------------|-------------|------------|
-| 0           | 1000        | 10%        |
-| 1000        | 5000        | 20%        |
-| 5000        | (unlimited) | 30%        |
-| QB-TOKEN    | —           | 0%         |
+### QB-CMT-TKN-TIER (Volume tiers on the token-backed **usage** resources)
+
+The 3 volume tiers apply per usage resource (`UR-CPUTIME-TKN`, `UR-DATASTORAGE-TKN`), **not** the token resource — the platform allows only **one** RateAdjustmentByTier per `Category=Token` resource (`QB-TOKEN`), so `QB-TOKEN` carries a single 0% tier and the tiering lives on the Usage-category resources (which is where the token-commit model applies per-resource discounts).
+
+| Resource (TOKEN-UOM) | Lower Bound | Upper Bound | Adjustment |
+|----------------------|-------------|-------------|------------|
+| UR-CPUTIME-TKN       | 0           | 1000        | 10%        |
+| UR-CPUTIME-TKN       | 1000        | 5000        | 20%        |
+| UR-CPUTIME-TKN       | 5000        | (unlimited) | 30%        |
+| UR-DATASTORAGE-TKN   | 0           | 1000        | 10%        |
+| UR-DATASTORAGE-TKN   | 1000        | 5000        | 20%        |
+| UR-DATASTORAGE-TKN   | 5000        | (unlimited) | 30%        |
+| QB-TOKEN             | 0           | —           | 0%         |
 
 ### Commitment Products (Percentage tiers)
 
@@ -228,11 +335,11 @@ qb-rates/
 ├── README.md                  # This file
 │
 │  Source CSVs (data to load)
-├── Product2.csv               # 165 records (Update UsageModelType only)
+├── Product2.csv               # 10 records (Update UsageModelType only)
 ├── RateCard.csv               # 3 records
-├── PriceBookRateCard.csv      # 3 records
-├── RateCardEntry.csv          # 19 records (Draft status)
-├── RateAdjustmentByTier.csv   # 21 records
+├── PriceBookRateCard.csv      # 2 records
+├── RateCardEntry.csv          # 126 records (Draft status — 15 per currency x 7 + 11 token-denominated)
+├── RateAdjustmentByTier.csv   # 128 records
 │
 │  Lookup Reference CSVs (for SFDMU resolution)
 ├── Pricebook2.csv             # Standard Price Book
@@ -258,10 +365,10 @@ This plan depends on the following having been loaded first:
 > **SFDMU v5 Required.** All externalId definitions and CSV formats are optimized for SFDMU v5.
 
 - **RateCard** uses `Upsert` with `Name;Type` composite key — matches correctly on re-run.
-- **PriceBookRateCard**, **RateCardEntry**, **RateAdjustmentByTier** use `deleteOldData: true` for idempotency. These objects have auto-number Names and all-relationship externalIds that SFDMU v5 cannot match against existing target records. On re-run, records are deleted and reinserted (functional idempotency with stable counts).
+- **PriceBookRateCard**, **RateCardEntry**, **RateAdjustmentByTier** use `deleteOldData: true` for idempotency. Before the 5.6.4 floor, SFDMU v5 could not match these objects' auto-number Names / all-relationship externalIds against existing target records; those traversal-match bugs are **fixed on the 5.6.4+ floor**, but the shipped plan retains delete-and-reinsert (functional idempotency with stable counts) pending the gated `sfdmu-v5-optimization` migration (see the floor note at the top).
 - **Product2** uses `Update` by `StockKeepingUnit`, so only existing products are modified.
 
-**Key requirement (SFDMU v5):** Objects with multi-component composite `externalId` definitions require a `$$` column in the source CSV for SFDMU to correctly match records during Upsert. The column name uses `$` between field names (e.g., `$$Field1$Field2`), and values use `;` between component values. Without this column, SFDMU inserts duplicates on re-runs. For objects where a `$$` column cannot be used (e.g., auto-number `Name` fields with all-relationship externalIds), use `deleteOldData: true` for functional idempotency. See [Composite Key Optimizations](../../../../../docs/references/sfdmu-composite-key-optimizations.md) for the full v5 migration guide.
+**Key requirement (SFDMU v5):** Objects with multi-component composite `externalId` definitions require a `$$` column in the source CSV for SFDMU to correctly match records during Upsert. The column name uses `$` between field names (e.g., `$$Field1$Field2`), and values use `;` between component values. Without this column, pre-5.6.4 SFDMU inserted duplicates on re-runs. For objects where a `$$` column cannot be used (e.g., auto-number `Name` fields with all-relationship externalIds), the shipped plan uses `deleteOldData: true` for functional idempotency — a pre-5.6.4 workaround retained pending the gated migration; on the 5.6.4+ floor new plans use `Upsert`. See [Composite Key Optimizations](../../../../../docs/references/sfdmu-composite-key-optimizations.md) for the full v5 migration guide.
 
 ## 260 Schema Analysis (Confirmed via Org Describe)
 
@@ -277,14 +384,14 @@ Schema was queried against a 260 scratch org. Findings below.
 
 ### Schema Concerns
 
-**`RateCard.Status` — NOT in 260 schema!**
+**`RateCard.Status` — RESOLVED.**
 
-The current SOQL query includes `Status`:
+The `RateCard` SOQL query no longer includes `Status` (the field does not exist on `RateCard` in 260). The current query is:
 ```sql
-SELECT Description, EffectiveFrom, EffectiveTo, Name, Status, Type FROM RateCard ORDER BY Name ASC
+SELECT Description, EffectiveFrom, EffectiveTo, Name, Type FROM RateCard
 ```
 
-However, the 260 schema describe for `RateCard` returns only:
+The 260 schema describe for `RateCard` returns only:
 
 | Field          | Type     | Updateable | In Current SOQL? |
 |----------------|----------|------------|-------------------|
@@ -294,16 +401,16 @@ However, the 260 schema describe for `RateCard` returns only:
 | `EffectiveFrom`| DATETIME | Yes        | Yes               |
 | `EffectiveTo`  | DATETIME | Yes        | Yes               |
 
-**`Status` is not a field on `RateCard` in 260.** This was also confirmed in prior testing (error: "No such column 'Status' on entity 'RateCard'"). The SOQL query includes it but the field does not exist — SFDMU may handle this gracefully by ignoring unknown fields, or it may cause an error. **Needs urgent validation.**
+`Status` has been removed from the query and `RateCard.csv` has no `Status` column.
 
-**Note:** `RateCardEntry` *does* have a `Status` field (confirmed in schema), so the confusion may be between the two objects.
+**Note:** `RateCardEntry` *does* have a `Status` field (confirmed in schema), so the prior confusion was between the two objects.
 
 ### Field Coverage Audit
 
 | Object               | Status | Notes                                                    |
 |----------------------|--------|----------------------------------------------------------|
 | Product2             | ✅     | Update only (UsageModelType) — correct                   |
-| RateCard             | ⚠️     | `Status` field not in 260 schema — must be removed       |
+| RateCard             | ✅     | `Status` removed from SOQL/CSV (not a 260 field) — correct |
 | PriceBookRateCard    | ✅     | All fields present (Name auto-generated, read-only)      |
 | RateCardEntry        | ✅     | All fields present including Status, RateNegotiation     |
 | RateAdjustmentByTier | ✅     | All updateable fields present (4: AdjType, AdjValue, LB, UB) |
@@ -351,7 +458,7 @@ Only 4 fields are updateable: `AdjustmentType`, `AdjustmentValue`, `LowerBound`,
 | UsageResource        | qb-rating    | Lookup CSV |
 | Pricebook2           | qb-pricing   | Lookup CSV |
 | RateCard             | This plan    | Upsert     |
-| RateCardEntry        | This plan    | Upsert     |
+| RateCardEntry        | This plan    | Insert (+deleteOldData) |
 
 ## External ID / Composite Key Analysis (Confirmed via Org Describe)
 
@@ -373,7 +480,7 @@ Only 4 fields are updateable: `AdjustmentType`, `AdjustmentValue`, `LowerBound`,
 |----------------------|-------------------------------------|----------|------------|
 | Product2             | `StockKeepingUnit`                  | No*      | ✅ OK — platform-enforced unique when RLM enabled |
 | RateCard             | `Name;Type`                         | No       | ✅ OK — 2-field composite, few records |
-| PriceBookRateCard    | `PriceBook.Name;RateCard.Name;Type` | No       | ✅ OK — 3-field composite |
+| PriceBookRateCard    | `PriceBook.Name;RateCard.Name;RateCardType` | No       | ✅ OK — 3-field composite |
 | RateCardEntry        | 4-field composite                   | No       | ✅ OK — comprehensive |
 | RateAdjustmentByTier | 6-field composite                   | No       | ✅ OK — tier bounds ensure uniqueness |
 
@@ -390,7 +497,5 @@ The 6-field RABT key avoids using `RateCardEntry.Name` (auto-numbered) by instea
 
 ## Optimization Opportunities
 
-1. **Remove `Status` from RateCard SOQL**: Field does not exist in 260 schema — must be removed to prevent query errors
-2. **Fix `excludeIdsFromCSVFiles`**: Currently set to `"false"` — change to `"true"` for portability
-3. **Validate RateCard.Status in CSV**: Check if `RateCard.csv` has a Status column and remove it if present
-4. **Document read-only field strategy**: Many RABT and RCE fields are read-only (auto-populated) but included in SOQL for extraction — document this dual-purpose pattern clearly
+1. **Fix `excludeIdsFromCSVFiles`**: Currently set to `"false"` — change to `"true"` for portability
+2. **Document read-only field strategy**: Many RABT and RCE fields are read-only (auto-populated) but included in SOQL for extraction — document this dual-purpose pattern clearly
