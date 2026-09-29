@@ -13,7 +13,7 @@ This bundle deploys three Agentforce **Employee Agents** plus their settings and
 | Billing Employee Assistance agent | `aiAuthoringBundles/RLM_Billing_Employee_Assistance/` | Builder Script `.agent` authoring bundle (developer name `RLM_Billing_Employee_Assistance`; label "Billing Assistant"). |
 | Quoting Assistant helper services | `classes/RLM_AI_AddProductToQuoteService`, `RLM_AI_ApplyQuoteLineDiscountsService`, `RLM_AI_QuoteDemoSummaryService` (+ tests) | Apex invocable services behind the Quoting Assistant's three helper flows (`flows/RLM_AI_Add_Product_To_Quote`, `RLM_AI_Apply_Quote_Line_Discounts`, `RLM_AI_Get_Quote_Demo_Summary`): one-call add-product (resolves product + default selling model, then the managed add-line), one-call bulk line discount (high-level targeting: applyToAll / productName / display-ordinals; percent, target-price, percent-of-list modes), and a read-only names-only quote recap. Each isolates the managed `quotingAI__*` invocation behind a `@TestVisible` invoker seam. |
 | Permission sets | `permissionsets/RLM_QuotingAgent.permissionset-meta.xml`, `permissionsets/RLM_QuotingAssistant.permissionset-meta.xml`, `permissionsets/RLM_BillingEmployeeAgent.permissionset-meta.xml` | Each contains `<agentAccesses>` so Lightning users can see the agent. |
-| Hosted MCP server | `mcpServerDefinitions/RLMQuoteBuilder.mcpServerDefinition-meta.xml` + `classes/RLM_CreateConfiguredQuote` (+ test) | One tool, `createConfiguredQuote`, backed by the Apex invocable through the API catalog (`aa:apex-RLM_CreateConfiguredQuote`). Exists because the platform's generic `revenue-cloud` MCP `createSalesTransaction` tool picks the PricebookEntry itself (a requested "Term Monthly" silently became "Term Annual", and a 12-month term became 12 years), never asks the configurator for bundle defaults, and has no BillingFrequency input. See **Hosted MCP server** below. |
+| Hosted MCP server | `mcpServerDefinitions/RLMQuoteBuilder.mcpServerDefinition-meta.xml` + `classes/RLM_CreateConfiguredQuote` (+ test) | One tool, `createConfiguredQuote` — which clients address by its title, **Create Configured Quote** — backed by the Apex invocable through the API catalog (`aa:apex-RLM_CreateConfiguredQuote`). Exists because the platform's generic `revenue-cloud` MCP `createSalesTransaction` tool picks the PricebookEntry itself (a requested "Term Monthly" silently became "Term Annual", and a 12-month term became 12 years), never asks the configurator for bundle defaults, and has no BillingFrequency input. See **Hosted MCP server** below. |
 
 `AiAuthoringBundle` requires **API version 65.0 or higher**.
 
@@ -98,7 +98,24 @@ org-side steps are not metadata and must be done per org:
 1. An `McpServerAccess` record with `Active = true` and `McpServerId` set to the
    `McpServerDefinition` Id (Tooling API, or Setup → Integrations → Salesforce MCP Servers).
 2. The client connects it: in Slack, add the server alongside `revenue-cloud` in the Salesforce
-   MCP settings. The tool then appears as `…_createConfiguredQuote`.
+   MCP settings (Salesforce → MCP Servers), where it then shows as `RLMQuoteBuilder` / Connected.
+
+### Clients address the tool by `toolTitle`, not `toolName`
+
+Slack lists the tool as **Create Configured Quote** — the `<toolTitle>` — and that is the only
+name the client model knows. A prompt or skill that asks for `createConfiguredQuote` (the
+`<toolName>`) gets "no such tool" and, being an agent, quietly falls back to whatever else it has:
+in practice `revenue-cloud`'s `createSalesTransaction`, producing exactly the broken quote this
+tool exists to prevent (no bundle components, wrong selling model). The fallback is silent, so the
+symptom looks like the tool misbehaving rather than never being called.
+
+Two consequences when authoring a tool:
+
+- Write `toolTitle` as the phrase you want callers to use, and use that phrase verbatim in every
+  skill and prompt.
+- A client reporting that it has no such tool is **not** evidence the server is unconnected. Check
+  the client's own server list first; asking the model is unreliable both ways, since it will also
+  accept an escape phrase like "reply NO SUCH TOOL if you can't" when it is merely confused.
 
 ## Why post-deploy publish + activation are required
 
