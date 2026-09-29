@@ -201,6 +201,31 @@ private class RLM_CreateConfiguredQuoteTest {
     }
 
     @isTest
+    static void normalisedUnitAcceptsShorthands() {
+        Assert.areEqual('Months', RLM_CreateConfiguredQuote.normalisedUnit('Monthly'));
+        Assert.areEqual('Months', RLM_CreateConfiguredQuote.normalisedUnit('month'));
+        Assert.areEqual('Annual', RLM_CreateConfiguredQuote.normalisedUnit('Yearly'));
+        Assert.areEqual('Semi-Annual', RLM_CreateConfiguredQuote.normalisedUnit('semi annual'));
+        Assert.areEqual('Weekly', RLM_CreateConfiguredQuote.normalisedUnit('week'));
+    }
+
+    @isTest
+    static void resolvePricebookEntriesAcceptsTermUnitShorthand() {
+        setupCatalog('RLM-TEST-SUB');
+        List<RLM_CreateConfiguredQuote.LineSpec> specs = RLM_CreateConfiguredQuote.parseLines(
+            '[{"sku":"RLM-TEST-SUB","sellingModelType":"Term","pricingTermUnit":"Monthly"}]'
+        );
+        Map<String, PricebookEntry> resolved = RLM_CreateConfiguredQuote.resolvePricebookEntries(
+            specs, Test.getStandardPricebookId(), UserInfo.getDefaultCurrency()
+        );
+        Assert.areEqual(
+            'Months',
+            String.valueOf(resolved.get('RLM-TEST-SUB').ProductSellingModel.PricingTermUnit),
+            'Monthly should resolve to the Months selling model'
+        );
+    }
+
+    @isTest
     static void resolvePricebookEntriesMatchesRequestedSellingModel() {
         Map<String, PricebookEntry> catalog = setupCatalog('RLM-TEST-SUB');
         List<RLM_CreateConfiguredQuote.LineSpec> specs = RLM_CreateConfiguredQuote.parseLines(

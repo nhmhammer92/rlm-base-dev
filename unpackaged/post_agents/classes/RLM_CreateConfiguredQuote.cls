@@ -358,7 +358,7 @@ public with sharing class RLM_CreateConfiguredQuote {
         if (String.isNotBlank(spec.sellingModelType) && !normalisedType(spec.sellingModelType).equalsIgnoreCase(type)) {
             return false;
         }
-        if (String.isNotBlank(spec.pricingTermUnit) && !spec.pricingTermUnit.trim().equalsIgnoreCase(unit)) {
+        if (String.isNotBlank(spec.pricingTermUnit) && !normalisedUnit(spec.pricingTermUnit).equalsIgnoreCase(normalisedUnit(unit))) {
             return false;
         }
         return true;
@@ -376,6 +376,28 @@ public with sharing class RLM_CreateConfiguredQuote {
         }
         if (value == 'term' || value == 'termdefined') {
             return 'TermDefined';
+        }
+        return raw == null ? '' : raw.trim();
+    }
+
+    /** Same shorthand tolerance for the term unit ("Monthly" for Months, "Yearly" for Annual). */
+    @TestVisible
+    private static String normalisedUnit(String raw) {
+        String value = raw == null ? '' : raw.trim().toLowerCase().replaceAll('[^a-z]', '');
+        if (value == 'month' || value == 'months' || value == 'monthly') {
+            return 'Months';
+        }
+        if (value == 'annual' || value == 'annually' || value == 'year' || value == 'yearly') {
+            return 'Annual';
+        }
+        if (value == 'quarter' || value == 'quarterly') {
+            return 'Quarterly';
+        }
+        if (value == 'semiannual' || value == 'semiannually' || value == 'halfyearly') {
+            return 'Semi-Annual';
+        }
+        if (value == 'week' || value == 'weekly') {
+            return 'Weekly';
         }
         return raw == null ? '' : raw.trim();
     }
