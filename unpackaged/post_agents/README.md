@@ -13,6 +13,7 @@ This bundle deploys three Agentforce **Employee Agents** plus their settings and
 | Billing Employee Assistance agent | `aiAuthoringBundles/RLM_Billing_Employee_Assistance/` | Builder Script `.agent` authoring bundle (developer name `RLM_Billing_Employee_Assistance`; label "Billing Assistant"). |
 | Quoting Assistant helper services | `classes/RLM_AI_AddProductToQuoteService`, `RLM_AI_ApplyQuoteLineDiscountsService`, `RLM_AI_QuoteDemoSummaryService` (+ tests) | Apex invocable services behind the Quoting Assistant's three helper flows (`flows/RLM_AI_Add_Product_To_Quote`, `RLM_AI_Apply_Quote_Line_Discounts`, `RLM_AI_Get_Quote_Demo_Summary`): one-call add-product (resolves product + default selling model, then the managed add-line), one-call bulk line discount (high-level targeting: applyToAll / productName / display-ordinals; percent, target-price, percent-of-list modes), and a read-only names-only quote recap. Each isolates the managed `quotingAI__*` invocation behind a `@TestVisible` invoker seam. |
 | Permission sets | `permissionsets/RLM_QuotingAgent.permissionset-meta.xml`, `permissionsets/RLM_QuotingAssistant.permissionset-meta.xml`, `permissionsets/RLM_BillingEmployeeAgent.permissionset-meta.xml` | Each contains `<agentAccesses>` so Lightning users can see the agent. |
+| Hosted MCP server | `mcpServerDefinitions/RLMQuoteBuilder.mcpServerDefinition-meta.xml` + `classes/RLM_CreateConfiguredQuote` (+ test) | One tool, `createConfiguredQuote`, backed by the Apex invocable through the API catalog (`aa:apex-RLM_CreateConfiguredQuote`). Exists because the platform's generic `revenue-cloud` MCP `createSalesTransaction` tool picks the PricebookEntry itself (a requested "Term Monthly" silently became "Term Annual", and a 12-month term became 12 years), never asks the configurator for bundle defaults, and has no BillingFrequency input. See **Hosted MCP server** below. |
 
 `AiAuthoringBundle` requires **API version 65.0 or higher**.
 
@@ -36,15 +37,68 @@ Driven by the `prepare_agents` flow (`cumulusci.yml`):
 2. `deploy_agents_settings` → `unpackaged/post_agents/settings`
 3. `deploy_agent_classes` → `unpackaged/post_agents/classes` (Apex invocable services used by Product Configuration flows)
 4. `deploy_agent_flows` → `unpackaged/post_agents/flows` (custom autolaunched flows backing Product Configuration actions)
-5. `deactivate_agents` → deactivates legacy agents so metadata can be redeployed idempotently (tolerates not-yet-deployed or already-inactive agents)
-6. `deploy_legacy_agents` → `unpackaged/post_agents/legacy` (Bot + BotVersion + GenAiPlannerBundle — standard metadata deploy, no publish needed)
-7. `deploy_agents` → the authoring bundles under `unpackaged/post_agents/aiAuthoringBundles`
-8. `publish_agents` → runs `sf agent publish authoring-bundle` for each `aiAuthoringBundles/<Name>/` so the platform compiles the bundle into a runnable `BotVersion`
-9. `activate_agents` → runs `sf agent activate` for all agents (both authoring bundles and legacy bots)
-10. `deploy_agent_permission_sets` → `unpackaged/post_agents/permissionsets` (must run **after** publish/activate: each PS's `<agentAccesses>` compiles to a `botDefinition` reference)
-11. `assign_permission_sets` → `RLM_QuotingAgent`, `RLM_QuotingAssistant`, `RLM_BillingEmployeeAgent` (the `ps_aea` anchor)
+5. `deploy_agent_mcp_servers` → `unpackaged/post_agents/mcpServerDefinitions` (must run **after** `deploy_agent_classes`: the tool binds to the Apex invocable)
+6. `deactivate_agents` → deactivates legacy agents so metadata can be redeployed idempotently (tolerates not-yet-deployed or already-inactive agents)
+7. `deploy_legacy_agents` → `unpackaged/post_agents/legacy` (Bot + BotVersion + GenAiPlannerBundle — standard metadata deploy, no publish needed)
+8. `deploy_agents` → the authoring bundles under `unpackaged/post_agents/aiAuthoringBundles`
+9. `publish_agents` → runs `sf agent publish authoring-bundle` for each `aiAuthoringBundles/<Name>/` so the platform compiles the bundle into a runnable `BotVersion`
+10. `activate_agents` → runs `sf agent activate` for all agents (both authoring bundles and legacy bots)
+11. `deploy_agent_permission_sets` → `unpackaged/post_agents/permissionsets` (must run **after** publish/activate: each PS's `<agentAccesses>` compiles to a `botDefinition` reference)
+12. `assign_permission_sets` → `RLM_QuotingAgent`, `RLM_QuotingAssistant`, `RLM_BillingEmployeeAgent` (the `ps_aea` anchor)
 
 Every step is gated on the `agents` feature flag (`project_config.project__custom__agents`, default `true` in `cumulusci.yml`). Standalone task invocation (e.g. `cci task run deploy_agents --org <alias>`) bypasses the gate.
+
+## Hosted MCP server (`RLMQuoteBuilder`)
+
+`mcpServerDefinitions/RLMQuoteBuilder.mcpServerDefinition-meta.xml` publishes one tool,
+`createConfiguredQuote`, to MCP clients such as Slack. It is bound to the Apex invocable
+`RLM_CreateConfiguredQuote` through the API catalog:
+
+```xml
+<apiDefinition>
+    <apiIdentifier>aa:apex-RLM_CreateConfiguredQuote</apiIdentifier>
+    <apiSource>API_CATALOG</apiSource>
+    <operation>RLM_CreateConfiguredQuote</operation>
+</apiDefinition>
+```
+
+### Why a custom tool at all
+
+The platform's `revenue-cloud` MCP server already has `createSalesTransaction`, but it cannot
+produce a correct Revenue Cloud quote in a billing-enabled org. Verified live in a 262 org:
+
+- **It picks the PricebookEntry itself** (lowest Id wins). A request for "Term Monthly, 12 months"
+  came back as Term Annual with an end date 12 years out, because `pricingTermUnit` is not used to
+  select the selling model.
+- **It never asks the configurator for bundle defaults**, so a bundle line arrives with zero
+  components and cannot be repriced into anything meaningful.
+- **It has no BillingFrequency input**, and billing rejects every Term-Defined/Evergreen line
+  without one (`FIELD_INTEGRITY_EXCEPTION … BillingFrequency can't be null`). The companion
+  before-save flow `RLM_Default_Quote_Line_Billing_Frequency` (in `unpackaged/post_billing/flows`)
+  covers direct DML paths, but `PeriodBoundary` is validated by Place Sales Transaction *before*
+  the save, so no flow can supply it — only a caller that sends the field can.
+
+`RLM_CreateConfiguredQuote` sends all of it explicitly in one Place Sales Transaction call
+(`ConfigurationExecutionEnum.FORCE` + `addDefaultConfiguration`), then applies component
+discounts in a second call once the configurator has created the child lines.
+
+### Gotchas found while authoring the definition
+
+| Symptom | Cause |
+| --- | --- |
+| `Element …language invalid at this location` | `McpServerDefinition` has no `language` element, despite the Tooling object having a `Language` field. |
+| `Server name must start with a letter, contain only alphanumeric characters, and be 2-40 characters long` | The developer name (file name) may not contain underscores — hence `RLMQuoteBuilder`, not `RLM_Quote_Builder`. |
+| `Value too long for field: Description maximum length is:255` | Server `description` is capped at 255 characters. The per-tool `descriptionOverride` — the text the client model actually reads — is not. |
+
+### Activating and connecting it
+
+Deploying the definition registers the server but does not make it available to clients. Two
+org-side steps are not metadata and must be done per org:
+
+1. An `McpServerAccess` record with `Active = true` and `McpServerId` set to the
+   `McpServerDefinition` Id (Tooling API, or Setup → Integrations → Salesforce MCP Servers).
+2. The client connects it: in Slack, add the server alongside `revenue-cloud` in the Salesforce
+   MCP settings. The tool then appears as `…_createConfiguredQuote`.
 
 ## Why post-deploy publish + activation are required
 

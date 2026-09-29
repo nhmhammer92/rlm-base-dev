@@ -65,13 +65,14 @@ Boolean flags that gate task/flow execution via `when:` clauses.
 - `prepare_agents` step 2 → `deploy_agents_settings`
 - `prepare_agents` step 3 → `deploy_agent_classes`
 - `prepare_agents` step 4 → `deploy_agent_flows`
-- `prepare_agents` step 5 → `deactivate_agents`
-- `prepare_agents` step 6 → `deploy_legacy_agents`
-- `prepare_agents` step 7 → `deploy_agents`
-- `prepare_agents` step 8 → `publish_agents`
-- `prepare_agents` step 9 → `activate_agents`
-- `prepare_agents` step 10 → `deploy_agent_permission_sets`
-- `prepare_agents` step 11 → `assign_permission_sets`
+- `prepare_agents` step 5 → `deploy_agent_mcp_servers`
+- `prepare_agents` step 6 → `deactivate_agents`
+- `prepare_agents` step 7 → `deploy_legacy_agents`
+- `prepare_agents` step 8 → `deploy_agents`
+- `prepare_agents` step 9 → `publish_agents`
+- `prepare_agents` step 10 → `activate_agents`
+- `prepare_agents` step 11 → `deploy_agent_permission_sets`
+- `prepare_agents` step 12 → `assign_permission_sets`
 
 ### `analytics` (default: `True`)
 

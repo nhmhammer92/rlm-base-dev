@@ -1670,6 +1670,18 @@
 
 ---
 
+### `deploy_agent_mcp_servers`
+
+**Description:** Deploy hosted MCP server definitions from unpackaged/post_agents/mcpServerDefinitions (RLMQuoteBuilder, exposing the Create Configured Quote Apex action to MCP clients such as Slack). Must run after deploy_agent_classes so the backing invocable exists. Connecting the server to a client, and the McpServerAccess record that activates it, are org-side steps that are not metadata.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_agents/mcpServerDefinitions`
+
+---
+
 ### `deploy_agent_permission_sets`
 
 **Description:** Deploy the Agentforce agent permission sets from unpackaged/post_agents/permissionsets. Must run after publish_agents — each permission set's agentAccesses compiles to a botDefinition reference, and the Bot only exists once the authoring bundle is published.
