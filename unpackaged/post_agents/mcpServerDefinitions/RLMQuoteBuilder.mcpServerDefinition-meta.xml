@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<McpServerDefinition xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Revenue Cloud quote creation for MCP clients such as Slack. Creates priced quotes with the requested selling models, configured bundles and discounts, which the generic revenue-cloud MCP tools cannot do.</description>
+    <masterLabel>RLM Quote Builder</masterLabel>
+    <tools>
+        <toolName>createConfiguredQuote</toolName>
+        <toolTitle>Create Configured Quote</toolTitle>
+        <descriptionOverride>Creates a priced Draft quote in one call: resolves each product's PricebookEntry from the requested selling model (OneTime, TermDefined or Evergreen plus the pricing term unit), sets the subscription dates, BillingFrequency and PeriodBoundary, has the platform configure bundles so their default components are added as linked child lines, and applies both line-level and per-component discounts. Pass top-level products only in Lines JSON; components come from the bundle definition and are discounted through componentDiscounts.</descriptionOverride>
+        <readOnly>false</readOnly>
+        <destructive>false</destructive>
+        <idempotent>false</idempotent>
+        <openWorld>false</openWorld>
+        <returnDirect>false</returnDirect>
+        <apiDefinition>
+            <apiIdentifier>aa:apex-RLM_CreateConfiguredQuote</apiIdentifier>
+            <apiSource>API_CATALOG</apiSource>
+            <operation>RLM_CreateConfiguredQuote</operation>
+        </apiDefinition>
+    </tools>
+</McpServerDefinition>

@@ -1003,6 +1003,18 @@ tasks:
     options:
       path: unpackaged/post_agents/flows
 
+  deploy_agent_mcp_servers:
+    description: >
+      Deploy hosted MCP server definitions from unpackaged/post_agents/mcpServerDefinitions
+      (RLMQuoteBuilder, exposing the Create Configured Quote Apex action to MCP clients such as
+      Slack). Must run after deploy_agent_classes so the backing invocable exists. Connecting the
+      server to a client, and the McpServerAccess record that activates it, are org-side steps
+      that are not metadata.
+    class_path: cumulusci.tasks.salesforce.Deploy
+    group: Revenue Lifecycle Management
+    options:
+      path: unpackaged/post_agents/mcpServerDefinitions
+
   deploy_agents:
     description: Deploy Agentforce Agent authoring bundles from unpackaged/post_agents/aiAuthoringBundles. Permission sets deploy separately (deploy_agent_permission_sets) after publish, because their agentAccesses reference a Bot that does not exist until publish_agents compiles the bundle.
     class_path: cumulusci.tasks.salesforce.Deploy
@@ -4374,24 +4386,27 @@ flows:
         task: deploy_agent_flows
         when: project_config.project__custom__agents
       5:
-        task: deactivate_agents
+        task: deploy_agent_mcp_servers
         when: project_config.project__custom__agents
       6:
-        task: deploy_legacy_agents
+        task: deactivate_agents
         when: project_config.project__custom__agents
       7:
-        task: deploy_agents
+        task: deploy_legacy_agents
         when: project_config.project__custom__agents
       8:
-        task: publish_agents
+        task: deploy_agents
         when: project_config.project__custom__agents
       9:
-        task: activate_agents
+        task: publish_agents
         when: project_config.project__custom__agents
       10:
-        task: deploy_agent_permission_sets
+        task: activate_agents
         when: project_config.project__custom__agents
       11:
+        task: deploy_agent_permission_sets
+        when: project_config.project__custom__agents
+      12:
         task: assign_permission_sets
         when: project_config.project__custom__agents
         options:
