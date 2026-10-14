@@ -15,8 +15,9 @@ ends up with the same layered structure — not the same exact patch versions.
 
 > **Audience:** new contributors bootstrapping a workstation, or existing
 > contributors replicating the setup on a second machine. For the very first
-> install steps (Homebrew, git, nvm, pyenv), follow the README's
-> *macOS Environment Setup* (Steps 1–11). This doc describes the **target
+> install steps (Homebrew, git, nvm, pyenv), follow the
+> [local installation guide](local-installation.md#macos-environment-setup-homebrew--pyenv--nvm)
+> (Steps 1–11). This doc describes the **target
 > architecture** and **ongoing maintenance** once those are in place.
 
 ---
@@ -36,6 +37,7 @@ ends up with the same layered structure — not the same exact patch versions.
 | **Salesforce CLI (`sf`)** | `npm install -g @salesforce/cli` | Salesforce metadata + data | latest (built-in auto-updater) |
 | **SFDMU plugin** | `sf plugins install sfdmu` | Bulk data import/export | v5.6.4+ required (enforced by `cci task run validate_setup`) |
 | **gh, git, GCM** | `brew install gh git git-credential-manager` | Source control + PR workflow | latest |
+| **Doc snapshot tooling** *(optional)* | `pip install -r scripts/doc_snapshot/requirements.txt && python -m playwright install chromium` (in any venv) | Refresh the Salesforce Help / Dev Guide corpus under `docs/salesforce/` (`python -m scripts.doc_snapshot`; see its [README](../../scripts/doc_snapshot/README.md)) | versions in `requirements.txt`; only needed to re-snapshot docs |
 
 **Pin philosophy:**
 - **Major line, not minor.** Patch versions move forward automatically. Bumping
@@ -183,9 +185,8 @@ if [ -n "$_NVM_PREFIX" ] && [ -s "$_NVM_PREFIX/nvm.sh" ]; then
 fi
 unset _NVM_PREFIX
 
-# Salesforce CLI token-redaction opt-out (see §6 troubleshooting). Lets
-# CumulusCI 4.10.x keep reading the access token out of `sf --json` output.
-export SF_TEMP_SHOW_SECRETS=true
+# Per-workstation overrides: values only, read as dotenv (see below).
+dotenv_if_exists .env.local
 ```
 
 ### First-time activation
@@ -194,6 +195,14 @@ export SF_TEMP_SHOW_SECRETS=true
 cd path/to/rlm-base-dev
 direnv allow              # one-time per workstation per .envrc revision
 ```
+
+Machine-specific settings (a path that differs per workstation, such as the Chrome for
+Testing overrides in [local-installation.md](local-installation.md#chrome-for-testing-managed-workstations))
+go in `.env.local`, which git ignores. `.envrc` loads it as dotenv: `KEY="value"` lines with
+`$VAR` expansion, and never runs it as shell. direnv doesn't ask to approve a file loaded that
+way, so it holds values only: a `$(cmd)` is kept as literal text, not run. Quote any value
+with spaces, because one unparsable line stops the whole file from loading. `.envrc` itself is
+tracked, so git overwrites local edits to it, and `direnv allow` is needed again when it changes.
 
 ### Verify
 
@@ -234,10 +243,9 @@ The script handles:
    venv's python symlink
 6. `pipx inject --force cumulusci "setuptools>=75.4"` — snowfakery 4.x
    requires modern setuptools. The historical `<71` pin (older docs)
-   is **incompatible**; see README's *Note on setuptools*. Note CI
-   adds `<77` as well (`.github/workflows/prepare-rlm-org.yml`) because
-   it's pinned to CCI 4.8.1; modern CCI 4.10+ works with setuptools
-   77+ so this guide doesn't enforce the upper bound.
+   is **incompatible**; see the [local installation guide](local-installation.md#step-7--install-cumulusci), *Note on setuptools*. Note CI
+   (`.github/workflows/prepare-rlm-org.yml`) installs the same
+   `setuptools>=75.4` with no upper bound, now that it pins CCI 4.10.1.
 7. `sf plugins update`
 8. `cci task run validate_setup` — verifies all 12 checks still pass
 
@@ -258,7 +266,7 @@ When Python 3.14 stabilizes for CCI, or Node 26 becomes LTS:
 
 For a clean macOS workstation, in order:
 
-1. **System bootstrap** — follow `README.md` § *macOS Environment Setup*
+1. **System bootstrap** — follow the [local installation guide](local-installation.md#macos-environment-setup-homebrew--pyenv--nvm), *macOS Environment Setup*,
    Steps 1–11. That installs Homebrew, git, gh, GCM, nvm + Node LTS,
    pyenv + Python 3.13.x, pipx, CumulusCI, sf CLI, and SFDMU.
 2. **Add direnv** — `brew install direnv`.
@@ -326,7 +334,7 @@ Symptom — a freshly created scratch org immediately fails, with a URL that
 ends in a redacted placeholder, e.g.:
 
 ```
-Error: Expired session for https://...my.salesforce.com/services/data/v67.0/
+Error: Expired session for https://...my.salesforce.com/services/data/v68.0/
 sobjects/Organization/[REDACTED] Use 'sf org auth show-access-token' to view.
 [{'message': 'INVALID_AUTH_HEADER', 'errorCode': 'INVALID_AUTH_HEADER'}]
 ```
@@ -334,25 +342,28 @@ sobjects/Organization/[REDACTED] Use 'sf org auth show-access-token' to view.
 Cause — the May 2026 Salesforce CLI security change
 ([forcedotcom/cli#3560](https://github.com/forcedotcom/cli/issues/3560))
 redacts access tokens from the `--json` output of `org create scratch`,
-`org display`, `org list`, and the `org login *` commands. CumulusCI 4.10.x
-still parses those outputs for the token, so it grabs the literal
+`org display`, `org list`, and the `org login *` commands. CumulusCI 4.10.0
+and earlier parse those outputs for the token, so it grabs the literal
 `[REDACTED] Use 'sf org auth show-access-token' to view.` string and sends it
 as the auth header. It is **not** a real expired session or an org problem.
 
-Fix — restore the legacy output via the Salesforce-provided shim:
+Fix — upgrade CumulusCI to 4.10.1 or later, which falls back to
+`sf org auth show-access-token` when the token is redacted:
 
 ```bash
-export SF_TEMP_SHOW_SECRETS=true
+pipx upgrade cumulusci && cci version   # expect 4.10.1+
 ```
 
-This is already set in the repo `.envrc` (so `direnv allow` covers local work)
-and in `.github/workflows/prepare-rlm-org.yml` (CI). If you hit it, you're
-likely in a shell where `.envrc` isn't active — re-run `direnv allow` or export
-it manually.
+If your pipx CumulusCI was built on Python 3.10, `pipx upgrade` can't install 4.10.1
+(it needs Python 3.11–3.13); rebuild it on a supported interpreter with
+`pipx reinstall cumulusci --python "$(pyenv prefix)/bin/python3"` or
+`scripts/bash/update-toolchain.sh`.
 
-> **Temporary.** Salesforce plans to remove `SF_TEMP_SHOW_SECRETS` in
-> Summer '26. The durable fix is a CumulusCI release that fetches the token via
-> `sf org auth show-access-token --json`; drop the env var once CCI does that.
+CI (`.github/workflows/prepare-rlm-org.yml`) pins 4.10.1. The repo no longer
+exports the old `SF_TEMP_SHOW_SECRETS=true` shim for CumulusCI (a few scripts
+still set it on their own `sf` calls); if you added it to `~/.zshenv`
+or a LaunchAgent, remove it (see
+[cci-sf-cli-token-workaround.md](cci-sf-cli-token-workaround.md)).
 
 ---
 

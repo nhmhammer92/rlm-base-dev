@@ -1,5 +1,5 @@
 {
-  "orgName": "Salesforce Agentforce Revenue Management",
+  "orgName": "Salesforce Revenue Cloud",
   "country": "US",
   "edition": "developer",
   "language": "en_US",
@@ -22,6 +22,7 @@
     "ExternalClientApps",
     "GlobalPromotionsMgmtBasic",
     "InsightsPlatform",
+    "MaxBundleDepth:5",
     "OrderManagement",
     "OrderSaveLogicEnabled",
     "PartnerCommunity",
@@ -138,7 +139,7 @@
     },
     "revenueManagementSettings": {
       "enableAdvCreateOrdersFromQuote": true,
-      "enableAdvancedDetailLinePricing": false,
+      "enableAdvancedDetailLinePricing": true,
       "enableAsIsRenewals": true,
       "enableAutoAddDerivedAsset": true,
       "enableCoreCPQ": true,
@@ -151,12 +152,10 @@
       "enableRevInstPricingDefaultPref": true,
       "enableRevUnifiedSetup": true,
       "enableRevenueAdjustment": true,
-      "enableScaleAttributes": true,
       "enableTransactionCloning": true,
       "enableTransactionProcessor": true,
       "groupsEnabled": true,
       "hidePriceRefreshNtfcn": false,
-      "persistChunkSizeOverride": true,
       "relaxUniqueCipValidation": true,
       "skipOrgSttPricing": false
     },
