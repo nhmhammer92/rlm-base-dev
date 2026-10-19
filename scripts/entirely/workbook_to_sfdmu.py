@@ -653,7 +653,7 @@ def unfloor_support(quotes: dict) -> None:
         for line in quote["lines"]:
             if line["priceModel"] != "Percentage of base":
                 continue
-            base = Decimal(line["supportBase"] or 0)
+            base = Decimal(line["supportBaseAmount"] or 0)
             rate = Decimal(line["supportRate"] or 0)
             line["lineTotal"] = money(
                 str((base * rate / 100).quantize(Decimal("0.01"))))
@@ -701,8 +701,11 @@ def build_expected_quotes(cat: Catalogue) -> dict:
             "billingPeriod": line["Billing period"],
             "priceModel": line["Demo price model"],
             "unitPrice": money(line["Demo unit price (EUR)"]),
-            "baseCharge": money(line["Base charge (EUR)"]),
-            "supportBase": money(line["Support base (EUR)"]),
+            # Both carry Amount: they are EUR figures, and a bare `...Base`
+            # key with a three-digit value reads as a branch reference to
+            # scripts/ai/check_release_refs.py.
+            "baseChargeAmount": money(line["Base charge (EUR)"]),
+            "supportBaseAmount": money(line["Support base (EUR)"]),
             "supportRate": rate_percent(line["Demo support rate"]),
             "lineTotal": money(line["Line total (EUR)"]),
             "supportBaseCategory": line["Support base category"],
