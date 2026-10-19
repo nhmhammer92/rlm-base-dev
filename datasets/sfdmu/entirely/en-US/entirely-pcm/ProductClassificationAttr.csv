@@ -1,0 +1,3 @@
+Name,ProductClassification.Code,AttributeCategory.Code,AttributeDefinition.Code,DefaultValue,IsPriceImpacting,IsReadOnly,IsRequired,IsHidden,Status,Sequence
+Total named users,PC-ENT-CENSHARE-CLOUD,AC-ENT-SIZING,ENT_TOTAL_NAMED_USERS,0,false,true,false,false,Active,1
+User band,PC-ENT-CENSHARE-CLOUD,AC-ENT-SIZING,ENT_NAMED_USERS,1-60,true,true,false,false,Active,2

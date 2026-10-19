@@ -1,0 +1,3 @@
+$$AttributeBasedAdjRule.Name$AttributeDefinition.Code$Product.StockKeepingUnit,AttributeBasedAdjRule.Name,AttributeDefinition.Code,Product.StockKeepingUnit,Operator,StringValue
+ENT-PRINT-M;ENT_NAMED_USERS;DEMO-CS-09,ENT-PRINT-M,ENT_NAMED_USERS,DEMO-CS-09,equals,61-120
+ENT-PRINT-L;ENT_NAMED_USERS;DEMO-CS-09,ENT-PRINT-L,ENT_NAMED_USERS,DEMO-CS-09,equals,121+

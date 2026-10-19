@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PathAssistant xmlns="http://soap.sforce.com/2006/04/metadata">
+    <active>true</active>
+    <entityName>Lead</entityName>
+    <fieldName>Status</fieldName>
+    <masterLabel>RLM Entirely Lead Path</masterLabel>
+    <pathAssistantSteps>
+        <fieldNames>RLM_Selling_Company__c</fieldNames>
+        <fieldNames>RLM_HubSpot_Form__c</fieldNames>
+        <fieldNames>LeadSource</fieldNames>
+        <info>&lt;p&gt;Arrived from a HubSpot form. Check which Entirely company it is for.&lt;/p&gt;</info>
+        <picklistValueName>New</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>RLM_Territory__c</fieldNames>
+        <fieldNames>RLM_Customer_Need__c</fieldNames>
+        <fieldNames>RLM_Budget__c</fieldNames>
+        <fieldNames>RLM_Timing__c</fieldNames>
+        <fieldNames>RLM_Nurture_In_HubSpot__c</fieldNames>
+        <info>&lt;p&gt;Record the need, budget and timing. Not ready to buy? Tick Nurture in HubSpot and leave the lead here.&lt;/p&gt;</info>
+        <picklistValueName>Working</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>RLM_Selling_Company__c</fieldNames>
+        <fieldNames>RLM_Territory__c</fieldNames>
+        <info>&lt;p&gt;Both are required before you can qualify or convert.&lt;/p&gt;</info>
+        <picklistValueName>Qualified</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>RLM_Selling_Company__c</fieldNames>
+        <fieldNames>RLM_Territory__c</fieldNames>
+        <info>&lt;p&gt;Convert to an account, contact and opportunity.&lt;/p&gt;</info>
+        <picklistValueName>Converted</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>Description</fieldNames>
+        <info>&lt;p&gt;Record why this lead was not a fit.&lt;/p&gt;</info>
+        <picklistValueName>Unqualified</picklistValueName>
+    </pathAssistantSteps>
+    <recordTypeName>RLM_Entirely_Lead</recordTypeName>
+</PathAssistant>

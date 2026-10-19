@@ -1,0 +1,191 @@
+{
+  "expressionSetApiName": "RLM_DefaultPricingProcedure",
+  "versionApiName": "RLM_DefaultPricingProcedure_V1",
+  "description": "Prices Entirely's support products as a percentage of the lines they cover. Swaps the procedure's header-discount block for the Derived Pricing element \u2014 Help forbids both in one procedure. Header discounts keep working: the active quote procedure plan already applies them in its third section, RLM_Price_Distribution_Procedure, which has its own Discount Distribution Service. The element sums each contributor's net subtotal, so a manual discount on a covered line lowers the support charge with it.",
+  "removeSteps": [
+    {
+      "name": "ListOperation"
+    },
+    {
+      "name": "AssignAmountBasedHeaderDiscount"
+    },
+    {
+      "name": "PercentageBasedHeaderDiscount"
+    },
+    {
+      "name": "AssignPercentageBasedHeaderDiscount"
+    },
+    {
+      "name": "HeaderPriceOverride"
+    },
+    {
+      "name": "AssignTotalPriceOverride"
+    },
+    {
+      "name": "DiscountDistributionService"
+    },
+    {
+      "name": "ApplyHeaderPriceOverride"
+    },
+    {
+      "name": "ApplyPercentageBasedHeaderDiscount"
+    },
+    {
+      "name": "ListApplyAmountBasedHeaderDiscount"
+    }
+  ],
+  "removeVariables": [
+    {
+      "name": "Constant_DDS_Amount"
+    },
+    {
+      "name": "Constant_DDS_NetUnitPrice"
+    },
+    {
+      "name": "Constant_DDS_Override"
+    },
+    {
+      "name": "Constant_DDS_Percentage"
+    }
+  ],
+  "addSteps": [
+    {
+      "actionType": "DerivedPricing",
+      "customElement": {
+        "parameters": [
+          {
+            "input": true,
+            "name": "Quantity",
+            "output": false,
+            "type": "Parameter",
+            "value": "LineItemQuantity"
+          },
+          {
+            "input": true,
+            "name": "ContributingNetUnitPrice",
+            "output": false,
+            "type": "Parameter",
+            "value": "ContributorUnitPrice"
+          },
+          {
+            "input": true,
+            "name": "ContributingSubTotal",
+            "output": false,
+            "type": "Parameter",
+            "value": "ContributorTotalPrice"
+          },
+          {
+            "input": true,
+            "name": "ContributingSource",
+            "output": false,
+            "type": "Parameter",
+            "value": "ContributorSource"
+          },
+          {
+            "input": true,
+            "name": "ContributingScope",
+            "output": false,
+            "type": "Parameter",
+            "value": "ContributorScope"
+          },
+          {
+            "input": true,
+            "name": "TransactionalListPrice",
+            "output": false,
+            "type": "Parameter",
+            "value": "ListPrice"
+          },
+          {
+            "input": true,
+            "name": "Non-TransactionalListPrice",
+            "output": false,
+            "type": "Parameter",
+            "value": "ContributorListPrice"
+          },
+          {
+            "input": true,
+            "name": "DerivedFormula",
+            "output": false,
+            "type": "Parameter",
+            "value": "ContributorFormulaInput"
+          },
+          {
+            "input": true,
+            "name": "ContributingId",
+            "output": false,
+            "type": "Parameter",
+            "value": "Contributor"
+          },
+          {
+            "input": true,
+            "name": "ContributingProduct",
+            "output": false,
+            "type": "Parameter",
+            "value": "ContributorProduct"
+          },
+          {
+            "input": true,
+            "name": "HeaderTotal",
+            "output": false,
+            "type": "Parameter",
+            "value": "TotalAmount"
+          },
+          {
+            "input": true,
+            "name": "sectionCount",
+            "output": false,
+            "type": "Literal",
+            "value": "0"
+          },
+          {
+            "input": true,
+            "name": "selectedFunction",
+            "output": false,
+            "type": "Literal",
+            "value": "Get"
+          },
+          {
+            "input": true,
+            "name": "IsRealTime",
+            "output": false,
+            "type": "Literal",
+            "value": "false"
+          },
+          {
+            "input": false,
+            "name": "NetUnitPrice",
+            "output": true,
+            "type": "Parameter",
+            "value": "NetUnitPrice"
+          },
+          {
+            "input": false,
+            "name": "Subtotal",
+            "output": true,
+            "type": "Parameter",
+            "value": "ItemNetTotalPrice"
+          }
+        ]
+      },
+      "description": "Derived Price",
+      "failedMessageTokenMappings": [],
+      "hasNestedExplainability": false,
+      "name": "Calculatethenetunitpricebasedonthepriceofanotherproductorasset",
+      "noResultMessageTokenMappings": [],
+      "passedMessageTokenMappings": [],
+      "resultIncluded": false,
+      "shouldExposeConditionDetails": false,
+      "shouldExposeExecPathMsgOnly": true,
+      "shouldShowExplExternally": false,
+      "stepType": "BusinessKnowledgeModel",
+      "placement": {
+        "afterStep": "Getbasepricesfrompricebook"
+      },
+      "label": "Calculate the net unit price based on the price of another product or asset"
+    }
+  ],
+  "externalDependencies": {
+    "customFields": [],
+    "note": "No custom fields. The Derived Pricing element reads the PricebookEntryDerivedPrice rows loaded by datasets/sfdmu/entirely/en-US/entirely-pricing, which must be in place before the first quote is priced, and the Derived Pricing Entries decision table must be refreshed after that load or the rows stay invisible to pricing. Salesforce_Default_Pricing_Discovery_Procedure must also be active with a context definition, or any quote carrying a derived line fails to place."
+  }
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompactLayout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RLM_Entirely_Lead</fullName>
+    <fields>Name</fields>
+    <fields>Company</fields>
+    <fields>Status</fields>
+    <fields>RLM_Selling_Company__c</fields>
+    <fields>RLM_Territory__c</fields>
+    <fields>Email</fields>
+    <fields>Phone</fields>
+    <label>RLM Entirely Lead</label>
+</CompactLayout>

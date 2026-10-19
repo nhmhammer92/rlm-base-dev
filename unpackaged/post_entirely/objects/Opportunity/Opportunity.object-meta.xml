@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Assignment only. The highlights panel on the Dynamic Forms record page reads the
+  compact layout, which is how Selling Company, Territory and the approval status
+  stay visible without touching the UX-assembly flexipage.
+-->
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <compactLayoutAssignment>RLM_Entirely_Opportunity</compactLayoutAssignment>
+</CustomObject>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RLM_Qualify_Requires_Company_Territory</fullName>
+    <active>true</active>
+    <description>An Entirely lead cannot be qualified or converted until Selling Company and Territory are filled in. Lead conversion is covered because the org has Require Validation for Converted Leads enabled.</description>
+    <errorConditionFormula>AND(
+  RecordType.DeveloperName = &quot;RLM_Entirely_Lead&quot;,
+  OR(
+    ISPICKVAL(Status, &quot;Qualified&quot;),
+    IsConverted
+  ),
+  OR(
+    ISBLANK(TEXT(RLM_Selling_Company__c)),
+    ISBLANK(TEXT(RLM_Territory__c))
+  )
+)</errorConditionFormula>
+    <errorMessage>Fill in Selling Company and Territory before qualifying or converting this lead.</errorMessage>
+</ValidationRule>

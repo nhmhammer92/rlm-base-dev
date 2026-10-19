@@ -1,0 +1,27 @@
+Id,Name,ParentProductId,ParentProduct.Name,ChildProductId,ChildProduct.Name,ChildProductClassificationId,ChildProductClassification.Name,ProductRelationshipTypeId,ProductRelationshipType.Name,Sequence
+0dSbm000000bXAIEA2,PRC-000000260,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0S9AAJ,Censhare Professional,,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAJEA2,PRC-000000261,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SAAAZ,Censhare Enterprise,,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXAKEA2,PRC-000000262,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SBAAZ,"Cloud Full Named User incl. DAM, PIM & CMS",,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXALEA2,PRC-000000263,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SCAAZ,"Cloud Light Named User incl. DAM, PIM & CMS",,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXAMEA2,PRC-000000264,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SDAAZ,Cloud Development User,,,,Bundle to Bundle Component Relationship,3
+0dSbm000000bXANEA2,PRC-000000265,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SEAAZ,Cloud Translation Mgmt - BasePack (3 Lang),,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAOEA2,PRC-000000266,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SFAAZ,Cloud Translation Mgmt Additional Language,,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXAPEA2,PRC-000000267,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SGAAZ,Cloud Translation Interface,,,,Bundle to Bundle Component Relationship,3
+0dSbm000000bXAQEA2,PRC-000000268,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SHAAZ,Cloud Print Prod. Mgmt with Adobe Tools,,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAREA2,PRC-000000269,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SIAAZ,Headless CMS - APIs,,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXASEA2,PRC-000000270,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SJAAZ,Cloud Headless CMS - Content Picker,,,,Bundle to Bundle Component Relationship,3
+0dSbm000000bXATEA2,PRC-000000271,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SKAAZ,Censhare Connectivity and CI HUB Bundle Adobe,,,,Bundle to Bundle Component Relationship,4
+0dSbm000000bXAUEA2,PRC-000000272,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SLAAZ,Cloud PIM Syndication,,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAVEA2,PRC-000000273,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SMAAZ,Syndication Connection 5-pack,,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXAWEA2,PRC-000000274,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SNAAZ,Cloud Production Environment,,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAXEA2,PRC-000000275,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SOAAZ,Cloud Non-Production Environment (Size M - 100u),,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAYEA2,PRC-000000276,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SPAAZ,Cloud Non-Production Environment (Size L - 250u),,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXAZEA2,PRC-000000277,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SQAAZ,Cloud Additional Production App Server,,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXAaEAM,PRC-000000278,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SRAAZ,Cloud Standard Assets Storage,,,,Bundle to Bundle Component Relationship,3
+0dSbm000000bXAbEAM,PRC-000000279,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SSAAZ,Cloud system setup for 100-user (size M),,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAcEAM,PRC-000000280,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0STAAZ,Cloud system setup for 250-user (size L),,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXAdEAM,PRC-000000281,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SUAAZ,Cloud Application Support - Gold,,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAeEAM,PRC-000000282,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SVAAZ,Cloud Application Support - Platinum,,,,Bundle to Bundle Component Relationship,2
+0dSbm000000bXAfEAM,PRC-000000283,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SWAAZ,Censhare Cloud Ops & Support (Core),,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXAgEAM,PRC-000000284,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000Ts0SXAAZ,Technical Consulting,,,,Bundle to Bundle Component Relationship,1
+0dSbm000000bXHxEAM,PRC-000000286,01tbm00000Ts0SYAAZ,Censhare Cloud,01tbm00000To1qOAAR,Headless CMS API Usage,,,,Bundle to Bundle Component Relationship,5

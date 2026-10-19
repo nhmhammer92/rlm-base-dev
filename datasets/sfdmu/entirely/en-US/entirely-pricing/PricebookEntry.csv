@@ -1,0 +1,94 @@
+$$Product2.StockKeepingUnit$ProductSellingModel.Name$CurrencyIsoCode,Product2.StockKeepingUnit,ProductSellingModel.Name,Pricebook2.Name,CurrencyIsoCode,UnitPrice,IsActive,IsDerived,Name
+DEMO-CS-01;Term Monthly;EUR,DEMO-CS-01,Term Monthly,Standard Price Book,EUR,600,true,false,Censhare Professional
+DEMO-CS-02;Term Monthly;EUR,DEMO-CS-02,Term Monthly,Standard Price Book,EUR,1000,true,false,Censhare Enterprise
+DEMO-CS-03;Term Monthly;EUR,DEMO-CS-03,Term Monthly,Standard Price Book,EUR,14,true,false,"Cloud Full Named User incl. DAM, PIM & CMS"
+DEMO-CS-04;Term Monthly;EUR,DEMO-CS-04,Term Monthly,Standard Price Book,EUR,7,true,false,"Cloud Light Named User incl. DAM, PIM & CMS"
+DEMO-CS-05;Term Monthly;EUR,DEMO-CS-05,Term Monthly,Standard Price Book,EUR,25,true,false,Cloud Development User
+DEMO-CS-06;Term Monthly;EUR,DEMO-CS-06,Term Monthly,Standard Price Book,EUR,80,true,false,Cloud Translation Mgmt - BasePack (3 Lang)
+DEMO-CS-07;Term Monthly;EUR,DEMO-CS-07,Term Monthly,Standard Price Book,EUR,12,true,false,Cloud Translation Mgmt Additional Language
+DEMO-CS-08;Term Monthly;EUR,DEMO-CS-08,Term Monthly,Standard Price Book,EUR,35,true,false,Cloud Translation Interface
+DEMO-CS-09;Term Monthly;EUR,DEMO-CS-09,Term Monthly,Standard Price Book,EUR,180,true,false,Cloud Print Prod. Mgmt with Adobe Tools
+DEMO-CS-10;Term Monthly;EUR,DEMO-CS-10,Term Monthly,Standard Price Book,EUR,90,true,false,Headless CMS - APIs
+DEMO-CS-11;Term Monthly;EUR,DEMO-CS-11,Term Monthly,Standard Price Book,EUR,50,true,false,Cloud Headless CMS - Content Picker
+DEMO-CS-12;Term Monthly;EUR,DEMO-CS-12,Term Monthly,Standard Price Book,EUR,65,true,false,Censhare Connectivity and CI HUB Bundle Adobe
+DEMO-CS-13;Term Annual;EUR,DEMO-CS-13,Term Annual,Standard Price Book,EUR,360,true,false,Cloud PIM Syndication
+DEMO-CS-14;Term Annual;EUR,DEMO-CS-14,Term Annual,Standard Price Book,EUR,80,true,false,Syndication Connection 5-pack
+DEMO-CS-15;Term Monthly;EUR,DEMO-CS-15,Term Monthly,Standard Price Book,EUR,180,true,false,Cloud Production Environment
+DEMO-CS-16;Term Monthly;EUR,DEMO-CS-16,Term Monthly,Standard Price Book,EUR,100,true,false,Cloud Non-Production Environment (Size M - 100u)
+DEMO-CS-17;Term Monthly;EUR,DEMO-CS-17,Term Monthly,Standard Price Book,EUR,180,true,false,Cloud Non-Production Environment (Size L - 250u)
+DEMO-CS-18;Term Monthly;EUR,DEMO-CS-18,Term Monthly,Standard Price Book,EUR,80,true,false,Cloud Additional Production App Server
+DEMO-CS-19;Term Monthly;EUR,DEMO-CS-19,Term Monthly,Standard Price Book,EUR,30,true,false,Cloud Standard Assets Storage
+DEMO-CS-20;One-Time;EUR,DEMO-CS-20,One-Time,Standard Price Book,EUR,1000,true,false,Cloud system setup for 100-user (size M)
+DEMO-CS-21;One-Time;EUR,DEMO-CS-21,One-Time,Standard Price Book,EUR,1800,true,false,Cloud system setup for 250-user (size L)
+DEMO-CS-22;Term Monthly;EUR,DEMO-CS-22,Term Monthly,Standard Price Book,EUR,0,true,true,Cloud Application Support - Gold
+DEMO-CS-23;Term Monthly;EUR,DEMO-CS-23,Term Monthly,Standard Price Book,EUR,0,true,true,Cloud Application Support - Platinum
+DEMO-CS-24;Term Monthly;EUR,DEMO-CS-24,Term Monthly,Standard Price Book,EUR,0,true,true,Censhare Cloud Ops & Support (Core)
+DEMO-CS-25;One-Time;EUR,DEMO-CS-25,One-Time,Standard Price Book,EUR,240,true,false,Technical Consulting
+DEMO-CS-CLOUD;Term Monthly;EUR,DEMO-CS-CLOUD,Term Monthly,Standard Price Book,EUR,0,true,false,Censhare Cloud
+DEMO-EL-01;Term Monthly;EUR,DEMO-EL-01,Term Monthly,Standard Price Book,EUR,300,true,false,ELAINE PLAN Essential
+DEMO-EL-02;Term Monthly;EUR,DEMO-EL-02,Term Monthly,Standard Price Book,EUR,700,true,false,ELAINE PLAN Enterprise
+DEMO-EL-03;Term Monthly;EUR,DEMO-EL-03,Term Monthly,Standard Price Book,EUR,100,true,false,ELAINE CappedFlatrate 1 M Emails
+DEMO-EL-04;Term Monthly;EUR,DEMO-EL-04,Term Monthly,Standard Price Book,EUR,300,true,false,ELAINE CappedFlatrate 10 M Emails
+DEMO-EL-05;Term Monthly;EUR,DEMO-EL-05,Term Monthly,Standard Price Book,EUR,40,true,false,Additional 1 tenant to Elaine Core
+DEMO-EL-06;Term Monthly;EUR,DEMO-EL-06,Term Monthly,Standard Price Book,EUR,120,true,false,Additional 3 tenants to Elaine Core
+DEMO-EL-07;Term Monthly;EUR,DEMO-EL-07,Term Monthly,Standard Price Book,EUR,70,true,false,AIDO AI Copilot Pro
+DEMO-EL-08;Term Monthly;EUR,DEMO-EL-08,Term Monthly,Standard Price Book,EUR,150,true,false,AIDO AI Autopilot Pro
+DEMO-EL-09;Term Monthly;EUR,DEMO-EL-09,Term Monthly,Standard Price Book,EUR,25,true,false,Additional Data Source
+DEMO-EL-10;Term Monthly;EUR,DEMO-EL-10,Term Monthly,Standard Price Book,EUR,40,true,false,Additional Data Store
+DEMO-EL-11;Term Monthly;EUR,DEMO-EL-11,Term Monthly,Standard Price Book,EUR,35,true,false,ELAINE Service PLAN silver
+DEMO-EL-12;Term Monthly;EUR,DEMO-EL-12,Term Monthly,Standard Price Book,EUR,70,true,false,ELAINE Service PLAN gold
+DEMO-EL-13;Term Monthly;EUR,DEMO-EL-13,Term Monthly,Standard Price Book,EUR,60,true,false,ELAINE 24/7 Emergency Hotline
+DEMO-EL-14;One-Time;EUR,DEMO-EL-14,One-Time,Standard Price Book,EUR,500,true,false,ELAINE RampUP S
+DEMO-EL-15;One-Time;EUR,DEMO-EL-15,One-Time,Standard Price Book,EUR,900,true,false,ELAINE RampUP M
+DEMO-EQ-01;Term Monthly;EUR,DEMO-EQ-01,Term Monthly,Standard Price Book,EUR,8,true,false,AI Search
+DEMO-EQ-02;Term Monthly;EUR,DEMO-EQ-02,Term Monthly,Standard Price Book,EUR,5,true,false,AI Recommendations
+DEMO-EQ-03;Term Monthly;EUR,DEMO-EQ-03,Term Monthly,Standard Price Book,EUR,12,true,false,AI Shopping Assistant
+DEMO-EQ-04;Term Monthly;EUR,DEMO-EQ-04,Term Monthly,Standard Price Book,EUR,3,true,false,Email Recommendations
+DEMO-EQ-05;Term Monthly;EUR,DEMO-EQ-05,Term Monthly,Standard Price Book,EUR,0,true,true,SLA Pro
+DEMO-EQ-06;Term Monthly;EUR,DEMO-EQ-06,Term Monthly,Standard Price Book,EUR,0,true,true,SLA Premium
+DEMO-EQ-07;One-Time;EUR,DEMO-EQ-07,One-Time,Standard Price Book,EUR,350,true,false,Setup — AI Search (one-time)
+DEMO-EQ-08;One-Time;EUR,DEMO-EQ-08,One-Time,Standard Price Book,EUR,250,true,false,Setup — AI Recommendations (one-time)
+DEMO-EQ-09;One-Time;EUR,DEMO-EQ-09,One-Time,Standard Price Book,EUR,400,true,false,Setup — AI Shopping Assistant (one-time)
+DEMO-EQ-10;One-Time;EUR,DEMO-EQ-10,One-Time,Standard Price Book,EUR,180,true,false,Setup — Email Recommendations (one-time)
+DEMO-FL-01;Term Monthly;EUR,DEMO-FL-01,Term Monthly,Standard Price Book,EUR,350,true,false,Facelift Professional 2026
+DEMO-FL-02;Term Monthly;EUR,DEMO-FL-02,Term Monthly,Standard Price Book,EUR,700,true,false,Facelift Enterprise 2026
+DEMO-FL-03;Term Monthly;EUR,DEMO-FL-03,Term Monthly,Standard Price Book,EUR,4,true,false,Social Media Profile
+DEMO-FL-04;Term Monthly;EUR,DEMO-FL-04,Term Monthly,Standard Price Book,EUR,0,true,false,Included Social Media Profiles
+DEMO-FL-05;Term Monthly;EUR,DEMO-FL-05,Term Monthly,Standard Price Book,EUR,30,true,false,Account Management & Support Level: Silver
+DEMO-FL-06;Term Monthly;EUR,DEMO-FL-06,Term Monthly,Standard Price Book,EUR,60,true,false,Account Management & Support Level: Gold
+DEMO-FL-07;One-Time;EUR,DEMO-FL-07,One-Time,Standard Price Book,EUR,220,true,false,SSO Standard Setup Professional
+DEMO-FL-08;One-Time;EUR,DEMO-FL-08,One-Time,Standard Price Book,EUR,350,true,false,SSO Standard Setup Enterprise
+DEMO-FL-09;One-Time;EUR,DEMO-FL-09,One-Time,Standard Price Book,EUR,100,true,false,Training Webinar
+DEMO-FL-10;Term Monthly;EUR,DEMO-FL-10,Term Monthly,Standard Price Book,EUR,120,true,false,Amplify
+DEMO-FL-11;Term Monthly;EUR,DEMO-FL-11,Term Monthly,Standard Price Book,EUR,3,true,false,Amplify user
+DEMO-FL-12;Term Monthly;EUR,DEMO-FL-12,Term Monthly,Standard Price Book,EUR,80,true,false,Facelift Data Studio - Base license
+DEMO-FL-13;Term Monthly;EUR,DEMO-FL-13,Term Monthly,Standard Price Book,EUR,10,true,false,Facelift Data Studio - User
+DEMO-FL-14;Term Monthly;EUR,DEMO-FL-14,Term Monthly,Standard Price Book,EUR,2,true,false,Facelift Data Studio - Profiles
+DEMO-FL-15;Term Monthly;EUR,DEMO-FL-15,Term Monthly,Standard Price Book,EUR,50,true,false,Salesforce Integration Add-on
+DEMO-MM-01;Term Annual;EUR,DEMO-MM-01,Term Annual,Standard Price Book,EUR,9600,true,false,MARMIND Platform - PROFESSIONAL (50 Users)
+DEMO-MM-02;Term Annual;EUR,DEMO-MM-02,Term Annual,Standard Price Book,EUR,15000,true,false,MARMIND Platform - ENTERPRISE (75 Users)
+DEMO-MM-03;Term Monthly;EUR,DEMO-MM-03,Term Monthly,Standard Price Book,EUR,150,true,false,Named User Extension - Professional (25-User Bundles)
+DEMO-MM-04;Term Monthly;EUR,DEMO-MM-04,Term Monthly,Standard Price Book,EUR,200,true,false,Named User Extension - Enterprise (25-User Bundles)
+DEMO-MM-05;Term Monthly;EUR,DEMO-MM-05,Term Monthly,Standard Price Book,EUR,150,true,false,Dedicated Server Hosting - Standard
+DEMO-MM-06;Term Monthly;EUR,DEMO-MM-06,Term Monthly,Standard Price Book,EUR,300,true,false,Dedicated Server Hosting - Extended
+DEMO-MM-07;Term Monthly;EUR,DEMO-MM-07,Term Monthly,Standard Price Book,EUR,20,true,false,Azure Cloud Storage - HDD (per 1 TB)
+DEMO-MM-08;Term Monthly;EUR,DEMO-MM-08,Term Monthly,Standard Price Book,EUR,35,true,false,Azure Cloud Storage - SSD (per 1 TB)
+DEMO-MM-09;Term Monthly;EUR,DEMO-MM-09,Term Monthly,Standard Price Book,EUR,10,true,false,Storage - Backup Volume (per 1 TB)
+DEMO-MM-10;Term Monthly;EUR,DEMO-MM-10,Term Monthly,Standard Price Book,EUR,35,true,false,MARMIND Office Connector
+DEMO-MM-11;Term Monthly;EUR,DEMO-MM-11,Term Monthly,Standard Price Book,EUR,45,true,false,MS PowerPoint Creator Connector
+DEMO-MM-12;Term Monthly;EUR,DEMO-MM-12,Term Monthly,Standard Price Book,EUR,30,true,false,Single Sign-On (OpenID/SAML) /mo
+DEMO-MM-13;One-Time;EUR,DEMO-MM-13,One-Time,Standard Price Book,EUR,600,true,false,Onboarding Level 1 - 5 Days
+DEMO-MM-14;One-Time;EUR,DEMO-MM-14,One-Time,Standard Price Book,EUR,1000,true,false,Onboarding Level 2 - 10 Days
+DEMO-MM-15;One-Time;EUR,DEMO-MM-15,One-Time,Standard Price Book,EUR,300,true,false,Training Package Level 1
+DEMO-MM-16;One-Time;EUR,DEMO-MM-16,One-Time,Standard Price Book,EUR,500,true,false,Training Package Level 2
+DEMO-MM-17;Term Monthly;EUR,DEMO-MM-17,Term Monthly,Standard Price Book,EUR,70,true,false,SLA Level 2 - up to 100 Users
+DEMO-MM-18;Term Monthly;EUR,DEMO-MM-18,Term Monthly,Standard Price Book,EUR,100,true,false,SLA Level 2 - 100-250 Users
+DEMO-OS-01;Term Monthly;EUR,DEMO-OS-01,Term Monthly,Standard Price Book,EUR,400,true,false,Business OS Foundation
+DEMO-OS-02;Term Monthly;EUR,DEMO-OS-02,Term Monthly,Standard Price Book,EUR,750,true,false,Business OS Expansion
+DEMO-OS-03;Term Monthly;EUR,DEMO-OS-03,Term Monthly,Standard Price Book,EUR,30,true,false,Additional Catalog Connector
+DEMO-OS-04;Term Monthly;EUR,DEMO-OS-04,Term Monthly,Standard Price Book,EUR,200,true,false,Entirely Intelligence (Expansion Add-on)
+DEMO-OS-05;One-Time;EUR,DEMO-OS-05,One-Time,Standard Price Book,EUR,500,true,false,Custom Connector Build (one-time)
+DEMO-OS-06;One-Time;EUR,DEMO-OS-06,One-Time,Standard Price Book,EUR,1000,true,false,Custom Connector Build High (one-time)
+DEMO-OS-07;One-Time;EUR,DEMO-OS-07,One-Time,Standard Price Book,EUR,300,true,false,Co-creation (Light/Starter)
+DEMO-OS-08;One-Time;EUR,DEMO-OS-08,One-Time,Standard Price Book,EUR,700,true,false,Co-creation (Standard/Advanced)
+DEMO-OS-09;Term Monthly;EUR,DEMO-OS-09,Term Monthly,Standard Price Book,EUR,2,true,false,Agent Consumption

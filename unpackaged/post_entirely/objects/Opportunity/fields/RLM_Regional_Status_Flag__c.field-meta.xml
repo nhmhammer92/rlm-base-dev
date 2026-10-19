@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <!--
+      One field that answers "is this deal cleared to move?" at a glance, replacing the bare
+      Regional Approval Status in the highlights panel. Status alone reads "Not Required"
+      both when the deal is genuinely in region and when it is out of region but not yet
+      submitted, which are opposite situations.
+    -->
+    <fullName>RLM_Regional_Status_Flag__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(
+  OR(ISBLANK(TEXT(RLM_Territory__c)), ISBLANK(RLM_Owner_Territory__c)),
+  &quot;Territory not set&quot;,
+  IF(
+    NOT(RLM_Regional_Exception__c),
+    &quot;In region&quot;,
+    IF(
+      ISPICKVAL(RLM_Regional_Approval_Status__c, &quot;Approved&quot;),
+      &quot;Out of region - approved&quot;,
+      IF(
+        ISPICKVAL(RLM_Regional_Approval_Status__c, &quot;Pending&quot;),
+        &quot;Out of region - awaiting approval&quot;,
+        IF(
+          ISPICKVAL(RLM_Regional_Approval_Status__c, &quot;Rejected&quot;),
+          &quot;Out of region - rejected&quot;,
+          &quot;Out of region - approval required&quot;
+        )
+      )
+    )
+  )
+)</formula>
+    <formulaTreatBlanksAs>BlankAsBlank</formulaTreatBlanksAs>
+    <inlineHelpText>Whether the deal is cleared to move past Qualification.</inlineHelpText>
+    <label>Regional Status</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

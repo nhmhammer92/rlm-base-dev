@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Censhare</fullName>
+        <default>false</default>
+        <label>Censhare</label>
+    </customValue>
+    <customValue>
+        <fullName>Marmind</fullName>
+        <default>false</default>
+        <label>Marmind</label>
+    </customValue>
+    <customValue>
+        <fullName>Facelift</fullName>
+        <default>false</default>
+        <label>Facelift</label>
+    </customValue>
+    <customValue>
+        <fullName>Elaine</fullName>
+        <default>false</default>
+        <label>Elaine</label>
+    </customValue>
+    <customValue>
+        <fullName>Epoq</fullName>
+        <default>false</default>
+        <label>Epoq</label>
+    </customValue>
+    <customValue>
+        <fullName>Business OS</fullName>
+        <default>false</default>
+        <label>Business OS</label>
+    </customValue>
+    <masterLabel>RLM Entirely Company</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

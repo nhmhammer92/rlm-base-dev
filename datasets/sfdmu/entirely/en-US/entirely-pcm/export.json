@@ -1,0 +1,92 @@
+{
+  "objects": [
+    {
+      "query": "SELECT Code, DataType, Description, Id, Name, Status FROM AttributePicklist WHERE Code = 'ENT-USER-BAND' ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Code, DisplayValue, Id, IsDefault, Name, PicklistId, Picklist.Code, Sequence, Status, Value FROM AttributePicklistValue WHERE Picklist.Code = 'ENT-USER-BAND' ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Picklist.Code;Code"
+    },
+    {
+      "query": "SELECT Code, DataType, Description, DeveloperName, Id, IsActive, IsRequired, Label, Name, PicklistId, Picklist.Code FROM AttributeDefinition WHERE Code IN ('ENT_NAMED_USERS', 'ENT_TOTAL_NAMED_USERS') ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Code, Description, Id, Name FROM AttributeCategory WHERE Code LIKE 'AC-ENT-%' ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, Id, AttributeCategory.Code, AttributeDefinition.Code FROM AttributeCategoryAttribute WHERE AttributeCategory.Code LIKE 'AC-ENT-%' ORDER BY AttributeCategory.Code ASC, AttributeDefinition.Code ASC",
+      "operation": "Upsert",
+      "externalId": "AttributeCategory.Code;AttributeDefinition.Code"
+    },
+    {
+      "query": "SELECT Code, Id, Name, ParentProductClassificationId, Status FROM ProductClassification WHERE Code LIKE 'PC-ENT-%' ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, DefaultValue, Id, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, Name, ProductClassificationId, Sequence, Status FROM ProductClassificationAttr WHERE ProductClassification.Code LIKE 'PC-ENT-%' ORDER BY Name ASC",
+      "operation": "Upsert",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT BasedOnId, BasedOn.Code, ConfigureDuringSale, Description, Family, Id, IsActive, IsAssetizable, IsSoldOnlyWithOtherProds, Name, ProductCode, StockKeepingUnit, Type FROM Product2 WHERE StockKeepingUnit LIKE 'DEMO-%' OR StockKeepingUnit = 'QB-DB' ORDER BY StockKeepingUnit ASC",
+      "operation": "Upsert",
+      "externalId": "StockKeepingUnit"
+    },
+    {
+      "query": "SELECT AttributeCategoryId, AttributeDefinitionId, DefaultValue, Id, IsHidden, IsPriceImpacting, IsReadOnly, IsRequired, Name, Product2Id, ProductClassificationAttributeId, Sequence, Status, AttributeDefinition.Code, ProductClassificationAttribute.Name, Product2.StockKeepingUnit FROM ProductAttributeDefinition WHERE AttributeDefinition.Code IN ('ENT_NAMED_USERS', 'ENT_TOTAL_NAMED_USERS') ORDER BY Product2.StockKeepingUnit ASC, AttributeDefinition.Code ASC",
+      "operation": "Upsert",
+      "externalId": "AttributeDefinition.Code;Product2.StockKeepingUnit"
+    },
+    {
+      "query": "SELECT DoesAutoRenewAssetByDefault, Id, Name, PricingTerm, PricingTermUnit, SellingModelType, Status FROM ProductSellingModel ORDER BY Name ASC",
+      "operation": "Readonly",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT Id, IsDefault, Product2Id, ProductSellingModelId, Product2.StockKeepingUnit, ProductSellingModel.Name FROM ProductSellingModelOption WHERE Product2.StockKeepingUnit LIKE 'DEMO-%' ORDER BY Product2.StockKeepingUnit ASC, ProductSellingModel.Name ASC",
+      "operation": "Upsert",
+      "externalId": "Product2.StockKeepingUnit;ProductSellingModel.Name"
+    },
+    {
+      "query": "SELECT AssociatedProductRoleCat, Id, MainProductRoleCat, Name FROM ProductRelationshipType ORDER BY Name ASC",
+      "operation": "Readonly",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT Code, Description, Id, MaxBundleComponents, MinBundleComponents, Name, ParentProductId, Sequence FROM ProductComponentGroup WHERE Code LIKE 'PCG-ENT-%' ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT ChildProductId, ChildProductRole, DoesBundlePriceIncludeChild, Id, IsComponentRequired, IsDefaultComponent, IsQuantityEditable, MaxQuantity, MinQuantity, ParentProductId, ParentProductRole, ProductComponentGroupId, ProductRelationshipTypeId, Quantity, QuoteVisibility, Sequence, ChildProduct.StockKeepingUnit, ParentProduct.StockKeepingUnit, ProductComponentGroup.Code, ProductRelationshipType.Name FROM ProductRelatedComponent WHERE ParentProduct.StockKeepingUnit = 'DEMO-CS-CLOUD' ORDER BY ChildProduct.StockKeepingUnit ASC, ParentProduct.StockKeepingUnit ASC, ProductComponentGroup.Code ASC, ProductRelationshipType.Name ASC",
+      "operation": "Upsert",
+      "externalId": "ChildProduct.StockKeepingUnit;ParentProduct.StockKeepingUnit;ProductComponentGroup.Code;ProductRelationshipType.Name"
+    },
+    {
+      "query": "SELECT CatalogType, Code, Description, Id, Name FROM ProductCatalog WHERE Code = 'CAT-ENTIRELY' ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT CatalogId, Code, Description, Id, IsNavigational, Name, ParentCategoryId, SortOrder FROM ProductCategory WHERE Catalog.Code = 'CAT-ENTIRELY' ORDER BY Code ASC",
+      "operation": "Upsert",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT CatalogId, Id, IsPrimaryCategory, ProductCategoryId, ProductId, ProductCategory.Code, Product.StockKeepingUnit FROM ProductCategoryProduct WHERE Catalog.Code = 'CAT-ENTIRELY' ORDER BY ProductCategory.Code ASC, Product.StockKeepingUnit ASC",
+      "operation": "Upsert",
+      "externalId": "ProductCategory.Code;Product.StockKeepingUnit"
+    }
+  ],
+  "apiVersion": "68.0",
+  "excludeIdsFromCSVFiles": "true",
+  "orgs": []
+}

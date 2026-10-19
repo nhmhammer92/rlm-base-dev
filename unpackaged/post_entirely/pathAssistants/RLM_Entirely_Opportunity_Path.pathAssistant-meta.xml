@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PathAssistant xmlns="http://soap.sforce.com/2006/04/metadata">
+    <active>true</active>
+    <entityName>Opportunity</entityName>
+    <fieldName>StageName</fieldName>
+    <masterLabel>RLM Entirely Opportunity Path</masterLabel>
+    <pathAssistantSteps>
+        <fieldNames>RLM_Selling_Company__c</fieldNames>
+        <fieldNames>RLM_Territory__c</fieldNames>
+        <fieldNames>CloseDate</fieldNames>
+        <fieldNames>Amount</fieldNames>
+        <fieldNames>RLM_Regional_Status_Flag__c</fieldNames>
+        <info>&lt;p&gt;Confirm the selling company and territory before moving to Discovery. If the territory differs from the owner&apos;s, submit the deal for regional ownership approval first.&lt;/p&gt;</info>
+        <picklistValueName>Qualification</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>NextStep</fieldNames>
+        <fieldNames>Description</fieldNames>
+        <info>&lt;p&gt;Solutions Engineering scopes products and dates.&lt;/p&gt;</info>
+        <picklistValueName>Discovery</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>Amount</fieldNames>
+        <info>&lt;p&gt;Create the quote from the opportunity.&lt;/p&gt;</info>
+        <picklistValueName>Proposal/Quote</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>NextStep</fieldNames>
+        <info>&lt;p&gt;Discounts and terms follow the approval rules.&lt;/p&gt;</info>
+        <picklistValueName>Negotiation</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>Amount</fieldNames>
+        <fieldNames>CloseDate</fieldNames>
+        <info>&lt;p&gt;Deal Desk releases the signed deal.&lt;/p&gt;</info>
+        <picklistValueName>Closed Won</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <fieldNames>Description</fieldNames>
+        <info>&lt;p&gt;Record why the deal was lost.&lt;/p&gt;</info>
+        <picklistValueName>Closed Lost</picklistValueName>
+    </pathAssistantSteps>
+    <recordTypeName>__MASTER__</recordTypeName>
+</PathAssistant>
