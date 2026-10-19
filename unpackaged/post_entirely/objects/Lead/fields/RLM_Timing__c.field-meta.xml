@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RLM_Timing__c</fullName>
+    <externalId>false</externalId>
+    <inlineHelpText>When the customer wants to buy.</inlineHelpText>
+    <label>Timing</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>This quarter</fullName>
+                <default>false</default>
+                <label>This quarter</label>
+            </value>
+            <value>
+                <fullName>Next quarter</fullName>
+                <default>false</default>
+                <label>Next quarter</label>
+            </value>
+            <value>
+                <fullName>H2</fullName>
+                <default>false</default>
+                <label>H2</label>
+            </value>
+            <value>
+                <fullName>Next year</fullName>
+                <default>false</default>
+                <label>Next year</label>
+            </value>
+            <value>
+                <fullName>Unknown</fullName>
+                <default>false</default>
+                <label>Unknown</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

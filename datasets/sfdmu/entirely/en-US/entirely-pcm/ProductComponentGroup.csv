@@ -1,0 +1,12 @@
+Code,Name,ParentProduct.StockKeepingUnit,MinBundleComponents,MaxBundleComponents,Sequence,Description
+PCG-ENT-PLAN,Plan,DEMO-CS-CLOUD,1,1,1,
+PCG-ENT-USERS,Named Users,DEMO-CS-CLOUD,0,,2,
+PCG-ENT-TRANS,Translation,DEMO-CS-CLOUD,0,,3,
+PCG-ENT-MOD,Modules and APIs,DEMO-CS-CLOUD,0,,4,
+PCG-ENT-SYND,Syndication,DEMO-CS-CLOUD,0,,5,
+PCG-ENT-INFRA,Infrastructure,DEMO-CS-CLOUD,0,,6,
+PCG-ENT-INFRA-TEST,Test Environment,DEMO-CS-CLOUD,0,1,7,
+PCG-ENT-SUPP,Application Support,DEMO-CS-CLOUD,0,1,8,
+PCG-ENT-SUPP-OPS,Cloud Operations,DEMO-CS-CLOUD,0,,9,
+PCG-ENT-SETUP,System Setup,DEMO-CS-CLOUD,0,1,10,
+PCG-ENT-SERVICES,Services,DEMO-CS-CLOUD,0,,11,

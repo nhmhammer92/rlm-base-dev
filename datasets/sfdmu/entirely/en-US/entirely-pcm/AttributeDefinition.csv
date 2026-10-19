@@ -1,0 +1,3 @@
+Code,Name,Label,DeveloperName,DataType,Picklist.Code,IsActive,IsRequired,Description
+ENT_TOTAL_NAMED_USERS,Total named users,Total named users,ENT_Named_User_Count,Number,,true,false,Full plus light named users on the configuration.
+ENT_NAMED_USERS,User band,User band,ENT_User_Band,Picklist,ENT-USER-BAND,true,false,"Named-user band of the configuration, copied onto a module that prices by user count."

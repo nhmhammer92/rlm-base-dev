@@ -1,0 +1,4 @@
+$$Picklist.Code$Code,Picklist.Code,Code,Name,Value,DisplayValue,Sequence,IsDefault,Status
+ENT-USER-BAND;1-60,ENT-USER-BAND,1-60,1-60,1-60,1–60 users,1,true,Active
+ENT-USER-BAND;61-120,ENT-USER-BAND,61-120,61-120,61-120,61–120 users,2,false,Active
+ENT-USER-BAND;121+,ENT-USER-BAND,121+,121+,121+,121 or more users,3,false,Active

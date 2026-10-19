@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Germany</fullName>
+        <default>false</default>
+        <label>Germany</label>
+    </customValue>
+    <customValue>
+        <fullName>Austria &amp; CEE</fullName>
+        <default>false</default>
+        <label>Austria &amp; CEE</label>
+    </customValue>
+    <customValue>
+        <fullName>Switzerland</fullName>
+        <default>false</default>
+        <label>Switzerland</label>
+    </customValue>
+    <customValue>
+        <fullName>UK &amp; Ireland</fullName>
+        <default>false</default>
+        <label>UK &amp; Ireland</label>
+    </customValue>
+    <customValue>
+        <fullName>Nordics</fullName>
+        <default>false</default>
+        <label>Nordics</label>
+    </customValue>
+    <customValue>
+        <fullName>Benelux</fullName>
+        <default>false</default>
+        <label>Benelux</label>
+    </customValue>
+    <masterLabel>RLM Entirely Territory</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

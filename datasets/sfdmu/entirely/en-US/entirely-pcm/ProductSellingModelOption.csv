@@ -1,0 +1,94 @@
+$$Product2.StockKeepingUnit$ProductSellingModel.Name,Product2.StockKeepingUnit,ProductSellingModel.Name,IsDefault
+DEMO-CS-01;Term Monthly,DEMO-CS-01,Term Monthly,true
+DEMO-CS-02;Term Monthly,DEMO-CS-02,Term Monthly,true
+DEMO-CS-03;Term Monthly,DEMO-CS-03,Term Monthly,true
+DEMO-CS-04;Term Monthly,DEMO-CS-04,Term Monthly,true
+DEMO-CS-05;Term Monthly,DEMO-CS-05,Term Monthly,true
+DEMO-CS-06;Term Monthly,DEMO-CS-06,Term Monthly,true
+DEMO-CS-07;Term Monthly,DEMO-CS-07,Term Monthly,true
+DEMO-CS-08;Term Monthly,DEMO-CS-08,Term Monthly,true
+DEMO-CS-09;Term Monthly,DEMO-CS-09,Term Monthly,true
+DEMO-CS-10;Term Monthly,DEMO-CS-10,Term Monthly,true
+DEMO-CS-11;Term Monthly,DEMO-CS-11,Term Monthly,true
+DEMO-CS-12;Term Monthly,DEMO-CS-12,Term Monthly,true
+DEMO-CS-13;Term Annual,DEMO-CS-13,Term Annual,true
+DEMO-CS-14;Term Annual,DEMO-CS-14,Term Annual,true
+DEMO-CS-15;Term Monthly,DEMO-CS-15,Term Monthly,true
+DEMO-CS-16;Term Monthly,DEMO-CS-16,Term Monthly,true
+DEMO-CS-17;Term Monthly,DEMO-CS-17,Term Monthly,true
+DEMO-CS-18;Term Monthly,DEMO-CS-18,Term Monthly,true
+DEMO-CS-19;Term Monthly,DEMO-CS-19,Term Monthly,true
+DEMO-CS-20;One-Time,DEMO-CS-20,One-Time,true
+DEMO-CS-21;One-Time,DEMO-CS-21,One-Time,true
+DEMO-CS-22;Term Monthly,DEMO-CS-22,Term Monthly,true
+DEMO-CS-23;Term Monthly,DEMO-CS-23,Term Monthly,true
+DEMO-CS-24;Term Monthly,DEMO-CS-24,Term Monthly,true
+DEMO-CS-25;One-Time,DEMO-CS-25,One-Time,true
+DEMO-CS-CLOUD;Term Monthly,DEMO-CS-CLOUD,Term Monthly,true
+DEMO-EL-01;Term Monthly,DEMO-EL-01,Term Monthly,true
+DEMO-EL-02;Term Monthly,DEMO-EL-02,Term Monthly,true
+DEMO-EL-03;Term Monthly,DEMO-EL-03,Term Monthly,true
+DEMO-EL-04;Term Monthly,DEMO-EL-04,Term Monthly,true
+DEMO-EL-05;Term Monthly,DEMO-EL-05,Term Monthly,true
+DEMO-EL-06;Term Monthly,DEMO-EL-06,Term Monthly,true
+DEMO-EL-07;Term Monthly,DEMO-EL-07,Term Monthly,true
+DEMO-EL-08;Term Monthly,DEMO-EL-08,Term Monthly,true
+DEMO-EL-09;Term Monthly,DEMO-EL-09,Term Monthly,true
+DEMO-EL-10;Term Monthly,DEMO-EL-10,Term Monthly,true
+DEMO-EL-11;Term Monthly,DEMO-EL-11,Term Monthly,true
+DEMO-EL-12;Term Monthly,DEMO-EL-12,Term Monthly,true
+DEMO-EL-13;Term Monthly,DEMO-EL-13,Term Monthly,true
+DEMO-EL-14;One-Time,DEMO-EL-14,One-Time,true
+DEMO-EL-15;One-Time,DEMO-EL-15,One-Time,true
+DEMO-EQ-01;Term Monthly,DEMO-EQ-01,Term Monthly,true
+DEMO-EQ-02;Term Monthly,DEMO-EQ-02,Term Monthly,true
+DEMO-EQ-03;Term Monthly,DEMO-EQ-03,Term Monthly,true
+DEMO-EQ-04;Term Monthly,DEMO-EQ-04,Term Monthly,true
+DEMO-EQ-05;Term Monthly,DEMO-EQ-05,Term Monthly,true
+DEMO-EQ-06;Term Monthly,DEMO-EQ-06,Term Monthly,true
+DEMO-EQ-07;One-Time,DEMO-EQ-07,One-Time,true
+DEMO-EQ-08;One-Time,DEMO-EQ-08,One-Time,true
+DEMO-EQ-09;One-Time,DEMO-EQ-09,One-Time,true
+DEMO-EQ-10;One-Time,DEMO-EQ-10,One-Time,true
+DEMO-FL-01;Term Monthly,DEMO-FL-01,Term Monthly,true
+DEMO-FL-02;Term Monthly,DEMO-FL-02,Term Monthly,true
+DEMO-FL-03;Term Monthly,DEMO-FL-03,Term Monthly,true
+DEMO-FL-04;Term Monthly,DEMO-FL-04,Term Monthly,true
+DEMO-FL-05;Term Monthly,DEMO-FL-05,Term Monthly,true
+DEMO-FL-06;Term Monthly,DEMO-FL-06,Term Monthly,true
+DEMO-FL-07;One-Time,DEMO-FL-07,One-Time,true
+DEMO-FL-08;One-Time,DEMO-FL-08,One-Time,true
+DEMO-FL-09;One-Time,DEMO-FL-09,One-Time,true
+DEMO-FL-10;Term Monthly,DEMO-FL-10,Term Monthly,true
+DEMO-FL-11;Term Monthly,DEMO-FL-11,Term Monthly,true
+DEMO-FL-12;Term Monthly,DEMO-FL-12,Term Monthly,true
+DEMO-FL-13;Term Monthly,DEMO-FL-13,Term Monthly,true
+DEMO-FL-14;Term Monthly,DEMO-FL-14,Term Monthly,true
+DEMO-FL-15;Term Monthly,DEMO-FL-15,Term Monthly,true
+DEMO-MM-01;Term Annual,DEMO-MM-01,Term Annual,true
+DEMO-MM-02;Term Annual,DEMO-MM-02,Term Annual,true
+DEMO-MM-03;Term Monthly,DEMO-MM-03,Term Monthly,true
+DEMO-MM-04;Term Monthly,DEMO-MM-04,Term Monthly,true
+DEMO-MM-05;Term Monthly,DEMO-MM-05,Term Monthly,true
+DEMO-MM-06;Term Monthly,DEMO-MM-06,Term Monthly,true
+DEMO-MM-07;Term Monthly,DEMO-MM-07,Term Monthly,true
+DEMO-MM-08;Term Monthly,DEMO-MM-08,Term Monthly,true
+DEMO-MM-09;Term Monthly,DEMO-MM-09,Term Monthly,true
+DEMO-MM-10;Term Monthly,DEMO-MM-10,Term Monthly,true
+DEMO-MM-11;Term Monthly,DEMO-MM-11,Term Monthly,true
+DEMO-MM-12;Term Monthly,DEMO-MM-12,Term Monthly,true
+DEMO-MM-13;One-Time,DEMO-MM-13,One-Time,true
+DEMO-MM-14;One-Time,DEMO-MM-14,One-Time,true
+DEMO-MM-15;One-Time,DEMO-MM-15,One-Time,true
+DEMO-MM-16;One-Time,DEMO-MM-16,One-Time,true
+DEMO-MM-17;Term Monthly,DEMO-MM-17,Term Monthly,true
+DEMO-MM-18;Term Monthly,DEMO-MM-18,Term Monthly,true
+DEMO-OS-01;Term Monthly,DEMO-OS-01,Term Monthly,true
+DEMO-OS-02;Term Monthly,DEMO-OS-02,Term Monthly,true
+DEMO-OS-03;Term Monthly,DEMO-OS-03,Term Monthly,true
+DEMO-OS-04;Term Monthly,DEMO-OS-04,Term Monthly,true
+DEMO-OS-05;One-Time,DEMO-OS-05,One-Time,true
+DEMO-OS-06;One-Time,DEMO-OS-06,One-Time,true
+DEMO-OS-07;One-Time,DEMO-OS-07,One-Time,true
+DEMO-OS-08;One-Time,DEMO-OS-08,One-Time,true
+DEMO-OS-09;Term Monthly,DEMO-OS-09,Term Monthly,true

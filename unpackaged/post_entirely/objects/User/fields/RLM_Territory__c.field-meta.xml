@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RLM_Territory__c</fullName>
+    <externalId>false</externalId>
+    <inlineHelpText>Sales territory this user owns. Deals outside it need regional ownership approval.</inlineHelpText>
+    <label>Territory</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetName>RLM_Entirely_Territory</valueSetName>
+    </valueSet>
+</CustomField>

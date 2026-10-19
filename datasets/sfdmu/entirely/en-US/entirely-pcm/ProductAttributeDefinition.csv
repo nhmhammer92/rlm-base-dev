@@ -1,0 +1,5 @@
+$$AttributeDefinition.Code$Product2.StockKeepingUnit,Product2.StockKeepingUnit,AttributeDefinition.Code,AttributeCategory.Code,ProductClassificationAttribute.Name,Name,DefaultValue,IsPriceImpacting,IsReadOnly,IsRequired,IsHidden,Status,Sequence
+ENT_TOTAL_NAMED_USERS;DEMO-CS-CLOUD,DEMO-CS-CLOUD,ENT_TOTAL_NAMED_USERS,AC-ENT-SIZING,Total named users,Total named users,0,false,true,false,false,Active,1
+ENT_NAMED_USERS;DEMO-CS-CLOUD,DEMO-CS-CLOUD,ENT_NAMED_USERS,AC-ENT-SIZING,User band,User band,1-60,false,true,false,true,Active,2
+ENT_TOTAL_NAMED_USERS;DEMO-CS-09,DEMO-CS-09,ENT_TOTAL_NAMED_USERS,AC-ENT-SIZING,Total named users,Total named users,0,false,true,false,true,Active,1
+ENT_NAMED_USERS;DEMO-CS-09,DEMO-CS-09,ENT_NAMED_USERS,AC-ENT-SIZING,User band,User band,1-60,true,true,false,false,Active,2

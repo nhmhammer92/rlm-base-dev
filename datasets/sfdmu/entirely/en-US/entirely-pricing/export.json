@@ -1,0 +1,62 @@
+{
+  "objects": [
+    {
+      "query": "SELECT Id, StockKeepingUnit FROM Product2 WHERE StockKeepingUnit LIKE 'DEMO-%' ORDER BY StockKeepingUnit ASC",
+      "operation": "Readonly",
+      "externalId": "StockKeepingUnit"
+    },
+    {
+      "query": "SELECT Id, Name, SellingModelType FROM ProductSellingModel ORDER BY Name ASC",
+      "operation": "Readonly",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT Code, Id, Name FROM AttributeDefinition WHERE Code IN ('ENT_NAMED_USERS', 'ENT_TOTAL_NAMED_USERS') ORDER BY Code ASC",
+      "operation": "Readonly",
+      "externalId": "Code"
+    },
+    {
+      "query": "SELECT Id, IsActive, IsStandard, Name FROM Pricebook2 WHERE IsStandard = true",
+      "operation": "Readonly",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT AdjustmentMethod, Id, IsActive, Name, ScheduleType FROM PriceAdjustmentSchedule ORDER BY Name ASC",
+      "operation": "Readonly",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT CurrencyIsoCode, Id, IsActive, IsDerived, Name, Pricebook2Id, Product2Id, ProductSellingModelId, UnitPrice, Product2.StockKeepingUnit, ProductSellingModel.Name FROM PricebookEntry WHERE Product2.StockKeepingUnit LIKE 'DEMO-%' ORDER BY Product2.StockKeepingUnit ASC, ProductSellingModel.Name ASC, CurrencyIsoCode ASC",
+      "operation": "Upsert",
+      "externalId": "Product2.StockKeepingUnit;ProductSellingModel.Name;CurrencyIsoCode"
+    },
+    {
+      "query": "SELECT AdjustmentType, CurrencyIsoCode, EffectiveFrom, EffectiveTo, Id, LowerBound, PriceAdjustmentScheduleId, Product2Id, ProductSellingModelId, TierType, TierValue, UpperBound, PriceAdjustmentSchedule.Name, Product2.StockKeepingUnit, ProductSellingModel.Name FROM PriceAdjustmentTier WHERE Product2.StockKeepingUnit LIKE 'DEMO-%' ORDER BY Product2.StockKeepingUnit ASC, LowerBound ASC",
+      "operation": "Upsert",
+      "externalId": "PriceAdjustmentSchedule.Name;Product2.StockKeepingUnit;ProductSellingModel.Name;LowerBound;CurrencyIsoCode"
+    },
+    {
+      "query": "SELECT Id, Name FROM AttributeBasedAdjRule WHERE Name LIKE 'ENT-%' ORDER BY Name ASC",
+      "operation": "Upsert",
+      "externalId": "Name"
+    },
+    {
+      "query": "SELECT AttributeBasedAdjRuleId, AttributeDefinitionId, Id, StringValue, Operator, ProductId, AttributeBasedAdjRule.Name, AttributeDefinition.Code, Product.StockKeepingUnit FROM AttributeAdjustmentCondition WHERE AttributeBasedAdjRule.Name LIKE 'ENT-%' ORDER BY AttributeBasedAdjRule.Name ASC, AttributeDefinition.Code ASC, Product.StockKeepingUnit ASC, Operator ASC, StringValue ASC",
+      "operation": "Upsert",
+      "externalId": "AttributeBasedAdjRule.Name;AttributeDefinition.Code;Product.StockKeepingUnit"
+    },
+    {
+      "query": "SELECT AdjustmentType, AdjustmentValue, AttributeBasedAdjRuleId, CurrencyIsoCode, EffectiveFrom, EffectiveTo, Id, PriceAdjustmentScheduleId, ProductId, ProductSellingModelId, AttributeBasedAdjRule.Name, PriceAdjustmentSchedule.Name, Product.StockKeepingUnit, ProductSellingModel.Name FROM AttributeBasedAdjustment WHERE AttributeBasedAdjRule.Name LIKE 'ENT-%' ORDER BY AttributeBasedAdjRule.Name ASC, PriceAdjustmentSchedule.Name ASC, Product.StockKeepingUnit ASC, ProductSellingModel.Name ASC, CurrencyIsoCode ASC",
+      "operation": "Upsert",
+      "externalId": "AttributeBasedAdjRule.Name;PriceAdjustmentSchedule.Name;Product.StockKeepingUnit;ProductSellingModel.Name;CurrencyIsoCode"
+    },
+    {
+      "query": "SELECT ContributingProductId, CurrencyIsoCode, DerivedPricingScope, EffectiveFrom, EffectiveTo, Formula, Id, PricebookEntryId, PricebookId, PricingSource, ProductId, ProductSellingModelId, ContributingProduct.StockKeepingUnit, Product.StockKeepingUnit, ProductSellingModel.Name FROM PricebookEntryDerivedPrice WHERE Product.StockKeepingUnit LIKE 'DEMO-%' ORDER BY Product.StockKeepingUnit ASC, ContributingProduct.StockKeepingUnit ASC, ProductSellingModel.Name ASC, CurrencyIsoCode ASC",
+      "operation": "Upsert",
+      "externalId": "Product.StockKeepingUnit;ContributingProduct.StockKeepingUnit;ProductSellingModel.Name;CurrencyIsoCode"
+    }
+  ],
+  "apiVersion": "68.0",
+  "excludeIdsFromCSVFiles": "true",
+  "orgs": []
+}

@@ -15,6 +15,54 @@ procedure plans (a different object, applied by `apply_procedure_plan_overlay`).
 | `approval_flags.json` | `RLM_DefaultPricingProcedure_V1` | Per-line discount approval flags: resets every line to level 0 and a blank indicator, then sets level 1 Manager (15% to under 25%), 2 Director (25% to under 35%) or 3 VP (35% to under 100%) from `ItemDiscountPercentage`. Writes `RLM_Approval_Level_Calc__c` and `RLM_Approval__c` on QuoteLineItem, or on OrderItem when an Order is priced. 12 steps, 8 constants. | **In the build.** `apply_approval_flags_overlay` in the `prepare_approvals_pricing` flow (part of `prepare_rlm_org`), when the `quantumbit` and `approvals` flags are both on. |
 | `discount_distribution.json` | `RLM_DefaultPricingProcedure_V1` | Header-discount block: amount-based and percentage-based header discount and header price override `ListGroup`s, then the `DiscountDistributionService` element that spreads the header discount to lines. 10 steps, 4 `Constant_DDS_*` constants. | **Manual only.** Worked example; its steps already ship in the `force-app` procedure. |
 | `map_line_item.json` | `RLM_DefaultPricingProcedure_V1` | The `MapLineItemtoDetailItem` step for Advanced Detail Line Pricing. 1 step. | **Manual only.** Worked example; the step already ships in the `force-app` procedure. |
+| `entirely_derived_support.json` | `RLM_DefaultPricingProcedure_V1` | Derived support pricing for the Entirely demo: removes the header-discount block (the 10 steps and 4 `Constant_DDS_*` of `discount_distribution.json`) and adds the `DerivedPricing` element. Net −10 steps, +1 step, −4 variables. | **Manual only.** Applied to the `EntirelyQB` demo org; see below. |
+
+### When `entirely_derived_support.json` runs
+
+Help forbids a Derived Price element and a Discount Distribution Service in the
+same procedure, so the overlay trades one for the other. Header discounts are
+unaffected: the active quote procedure plan already applies them in its third
+section, `RLM_Price_Distribution_Procedure`, which carries its own Discount
+Distribution Service. The procedure plan itself is not touched, and `force-app`
+is untouched — this is an org-side change only.
+
+The overlay needs no custom fields and no context extension. What it does need
+is the plan's `PricebookEntryDerivedPrice` rows in place **and the Derived
+Pricing Entries decision table refreshed** after that load — until it is, the
+rows are invisible to pricing and every support line prices at 0. It also needs
+`Salesforce_Default_Pricing_Discovery_Procedure` active with a context
+definition — while that procedure is inactive, any quote carrying a derived
+line fails to place.
+
+The element lands after `Getbasepricesfrompricebook`, because
+`Setthenetunitpriceforlineswithderivedpricing` consumes its output. That
+placement does **not** make support a function of list prices. Derived pricing
+resolves after the contributing lines are fully priced, whatever its sequence,
+so the formula's `TotalPrice` is each contributor's *net* subtotal: discount a
+covered line by 20% and the support charge drops by 20% of that line's share.
+A plain reprice is stable, because the adjustments it re-derives are themselves
+deterministic.
+
+A quantity-weighted list-price basis is not expressible here. The only formula
+token carrying quantity is `TotalPrice`, which is net; `ListPrice` is a unit
+price, so a 90-user line would contribute its unit price rather than its
+extended one. Salesforce's own example (`ListPrice * 0.10`) sidesteps this by
+deriving from a single-unit bundle.
+
+The Entirely workbook also floors each support line at EUR 30, which this
+overlay does **not** model: Help says both Discount Distribution Service (which
+owns the only built-in `MinimumNetUnitPrice`) and Formula Based Pricing "doesn't
+support derived products on quote line items", so there is no supported
+in-procedure path to one. The floor only bites on the two Cloud Ops lines, which
+price at 17.00 and 29.50 instead of 30.00. The supported route to a floor — and
+to a discount-proof basis, which needs the same hook — is an Apex posthook on
+the procedure plan (`RevSignaling.SignalingApexProcessor`), which runs last and
+can recompute from list prices itself without any custom fields. It requires the
+Revenue Cloud Advanced license.
+
+To undo, re-apply `discount_distribution.json` and remove the added step.
+A pre-change snapshot of the procedure is worth taking first
+(`export_expression_set.py`), since the overlay cannot restore what it replaced.
 
 Against the shipped procedure, a manual-only overlay just replays steps that
 already exist (see *Existing steps* below). Its use is as a template for new

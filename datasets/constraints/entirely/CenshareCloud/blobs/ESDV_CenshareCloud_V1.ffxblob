@@ -1,0 +1,160 @@
+// ============================================================================
+// CenshareCloud - configurator rules for the Censhare Cloud bundle (DEMO-CS-CLOUD)
+// ============================================================================
+// Patterns borrowed from the QuantumBit models:
+//   * QuantumBitComplete - flat relation ports on the bundle root (the PCM
+//     component groups stay in PCM; the model does not declare group types),
+//     blocking constraint() rules and a require() rule.
+//   * Server2 (Q-Rack)  - a live, non-configurable counter shown as a product
+//     attribute, and message(..., "Warning") sizing hints.
+//
+// A CML variable binds to the product attribute whose developer name it carries:
+//   ENT_Named_User_Count  Number   on Censhare Cloud (DEMO-CS-CLOUD)
+//   ENT_User_Band         Picklist on Cloud Print Prod. Mgmt (DEMO-CS-09);
+//                                  its band value drives the attribute price.
+// Both products share one classification, so each also inherits the other's
+// attribute. Those two copies are never written here; they are hidden per
+// product in PCM. The names come from scripts/entirely/workbook_to_sfdmu.py;
+// change both together.
+// HeadlessCmsApiUsage is QB-DB, renamed "Headless CMS API Usage" for this
+// bundle. A product may only be typed in ONE active model, so QuantumBitBundle
+// has to be deactivated for this one to run.
+//
+// relation[Type] counts line QUANTITY, not instances: a single Full Named User
+// line with Quantity 90 contributes 90. Verified in the configurator debug log
+// (RLM_CONFIGURATOR_END) on a 90 + 50 quote, which reported 140.
+// ----------------------------------------------------------------------------
+
+type LineItem;
+
+type CenshareCloud : LineItem {
+    relation professional : CenshareProfessional;
+    relation enterprise : CenshareEnterprise;
+    relation fullUsers : FullNamedUser;
+    relation lightUsers : LightNamedUser;
+    relation devUsers : DevelopmentUser;
+    relation basePack : TranslationBasePack;
+    relation addlLanguages : AdditionalLanguage;
+    relation translationInterface : TranslationInterface;
+    relation printModule : PrintProductionMgmt;
+    relation headlessApis : HeadlessCmsApis;
+    relation apiUsage : HeadlessCmsApiUsage;
+    relation contentPicker : ContentPicker;
+    relation ciHub : CiHubBundle;
+    relation pimSyndication : PimSyndication;
+    relation syndicationPacks : SyndicationConnectionPack;
+    relation prodEnv : ProductionEnvironment;
+    relation nonProdM : NonProdEnvM;
+    relation nonProdL : NonProdEnvL;
+    relation appServer : AdditionalAppServer;
+    relation storage : AssetsStorage;
+    relation setupM : SystemSetupM;
+    relation setupL : SystemSetupL;
+    relation gold : SupportGold;
+    relation platinum : SupportPlatinum;
+    relation cloudOps : CloudOps;
+    relation consulting : TechnicalConsulting;
+
+    // Development users are not named users and do not count.
+    //
+    // The band is deliberately NOT banded here, only on the print module that
+    // prices by it. Banding the count on the bundle does not work: the band's
+    // left-hand side is this count, which the engine can change by rewriting
+    // fullUsers/lightUsers cardinality, and that is the branch it takes -
+    // ~205k-393k backtracks on $cardVar_fullUsers_FullNamedUser until it hits
+    // the 15s solver time limit (ReachedTimeLimitDuringGoalExecutionBecauseOf).
+    // peelable, sequence (30/40) and domainComputation were each tried on top
+    // of the band and none moved the engine off that choice point. On the print
+    // module the count arrives through parent() as a propagated value, so there
+    // is no cardinality to search and the band resolves. The bundle's own copy
+    // of the band attribute is hidden in PCM instead (workbook_to_sfdmu.py).
+    @(configurable = false, defaultValue = "0")
+    int ENT_Named_User_Count = fullUsers[FullNamedUser] + lightUsers[LightNamedUser];
+
+    require(headlessApis[HeadlessCmsApis] > 0, apiUsage[HeadlessCmsApiUsage],
+        "API usage is metered with Headless CMS APIs.");
+
+    // These two were constraint(A -> B) rules, which the engine always resolves
+    // by ADDING B. A message(..., "Error") blocks the rep in the configurator
+    // instead, and adds nothing. (Error does not block the quote line table.)
+    message(addlLanguages[AdditionalLanguage] > 0 && basePack[TranslationBasePack] == 0,
+        "Additional languages need the Translation base pack (3 languages). Add it, or remove the extra languages.", "Error");
+
+    message(contentPicker[ContentPicker] > 0 && headlessApis[HeadlessCmsApis] == 0,
+        "Content Picker runs on Headless CMS APIs. Add Headless CMS - APIs, or remove the Content Picker.", "Error");
+
+    message(ENT_Named_User_Count > 100 && nonProdM[NonProdEnvM] > 0,
+        "More than 100 named users: switch to the Size L test environment (250 users).", "Warning");
+
+    message(ENT_Named_User_Count > 100 && setupM[SystemSetupM] > 0,
+        "More than 100 named users: switch to the 250-user system setup (size L).", "Warning");
+
+}
+
+type CenshareProfessional : LineItem;
+
+type CenshareEnterprise : LineItem;
+
+type FullNamedUser : LineItem;
+
+type LightNamedUser : LineItem;
+
+type DevelopmentUser : LineItem;
+
+type TranslationBasePack : LineItem;
+
+type AdditionalLanguage : LineItem;
+
+type TranslationInterface : LineItem;
+
+type PrintProductionMgmt : LineItem {
+    // parent() is only accepted as an initializer, not inside an expression.
+    // A local name, not ENT_Named_User_Count: this module also inherits that
+    // attribute from the shared classification, and its copy is hidden in PCM
+    // rather than bound, so nothing here should write to it.
+    int namedUsers = parent(ENT_Named_User_Count);
+
+    // The band drives the attribute-based price adjustment. peelable lets the
+    // engine replace the PCM default; without it a defaulted value is a hard
+    // selection the solver will not override.
+    @(configurable = false, peelable = true, defaultValue = "1-60")
+    string ENT_User_Band = ["1-60", "61-120", "121+"];
+
+    constraint(namedUsers <= 60 -> ENT_User_Band == "1-60");
+    constraint(namedUsers > 60 && namedUsers <= 120 -> ENT_User_Band == "61-120");
+    constraint(namedUsers > 120 -> ENT_User_Band == "121+");
+}
+
+type HeadlessCmsApis : LineItem;
+
+type HeadlessCmsApiUsage : LineItem;
+
+type ContentPicker : LineItem;
+
+type CiHubBundle : LineItem;
+
+type PimSyndication : LineItem;
+
+type SyndicationConnectionPack : LineItem;
+
+type ProductionEnvironment : LineItem;
+
+type NonProdEnvM : LineItem;
+
+type NonProdEnvL : LineItem;
+
+type AdditionalAppServer : LineItem;
+
+type AssetsStorage : LineItem;
+
+type SystemSetupM : LineItem;
+
+type SystemSetupL : LineItem;
+
+type SupportGold : LineItem;
+
+type SupportPlatinum : LineItem;
+
+type CloudOps : LineItem;
+
+type TechnicalConsulting : LineItem;

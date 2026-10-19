@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cancels one in-flight approval submission, so act1_reset.apex can clear a half-finished
+  demo without leaving a stale work item in the Approvals tab.
+
+  This exists as a flow because cancelApprovalSubmission is a standard invocable action:
+  Apex cannot call it directly, and an active ApprovalSubmission can be neither deleted
+  nor edited (Status is read-only, and delete returns "because it's active").
+-->
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Cancel_Submission</name>
+        <label>Cancel Submission</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>cancelApprovalSubmission</actionName>
+        <actionType>cancelApprovalSubmission</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>approvalSubmissionId</name>
+            <value>
+                <elementReference>approvalSubmissionId</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>comments</name>
+            <value>
+                <stringValue>Demo reset.</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>cancelApprovalSubmission</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <apiVersion>68.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <environments>Default</environments>
+    <interviewLabel>RLM Entirely Cancel Approval Submission {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>RLM Entirely Cancel Approval Submission</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Cancel_Submission</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <variables>
+        <name>approvalSubmissionId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+</Flow>

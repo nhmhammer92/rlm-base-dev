@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RLM_Entirely_Lead</fullName>
+    <active>true</active>
+    <businessProcess>RLM_Entirely_Lead_Process</businessProcess>
+    <compactLayoutAssignment>RLM_Entirely_Lead</compactLayoutAssignment>
+    <description>Inbound leads for the Entirely group demo.</description>
+    <label>Entirely Lead</label>
+</RecordType>

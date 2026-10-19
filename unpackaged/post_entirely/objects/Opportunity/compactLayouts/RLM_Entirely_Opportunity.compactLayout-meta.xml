@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompactLayout xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RLM_Entirely_Opportunity</fullName>
+    <fields>Name</fields>
+    <fields>Amount</fields>
+    <fields>CloseDate</fields>
+    <fields>RLM_Selling_Company__c</fields>
+    <fields>RLM_Territory__c</fields>
+    <fields>RLM_Regional_Status_Flag__c</fields>
+    <label>RLM Entirely Opportunity</label>
+</CompactLayout>

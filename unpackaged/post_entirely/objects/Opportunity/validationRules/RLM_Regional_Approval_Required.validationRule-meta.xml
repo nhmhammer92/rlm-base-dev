@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>RLM_Regional_Approval_Required</fullName>
+    <active>true</active>
+    <description>A deal outside the owner&apos;s territory cannot be moved past Qualification until the regional ownership approval is granted. Only fires when someone changes the stage on an existing record, so opportunities created by the API at a later stage are unaffected.</description>
+    <errorConditionFormula>AND(
+  NOT(ISNEW()),
+  ISCHANGED(StageName),
+  NOT(ISPICKVAL(StageName, &quot;Qualification&quot;)),
+  NOT(ISPICKVAL(StageName, &quot;Closed Lost&quot;)),
+  RLM_Regional_Exception__c,
+  NOT(ISPICKVAL(RLM_Regional_Approval_Status__c, &quot;Approved&quot;))
+)</errorConditionFormula>
+    <errorMessage>This deal is outside the owner&apos;s territory. Submit it for regional ownership approval before moving it past Qualification.</errorMessage>
+</ValidationRule>

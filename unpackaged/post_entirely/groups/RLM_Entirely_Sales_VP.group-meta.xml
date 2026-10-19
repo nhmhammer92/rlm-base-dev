@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Approvers for the regional ownership orchestration. Unlike classic approval steps,
+  Approval Orchestration accepts a public group as an assignee. Membership is added at
+  runtime by scripts/apex/entirely/act1_reset.apex so no username is baked into the repo.
+-->
+<Group xmlns="http://soap.sforce.com/2006/04/metadata">
+    <doesIncludeBosses>false</doesIncludeBosses>
+    <name>Entirely Sales VP</name>
+</Group>
