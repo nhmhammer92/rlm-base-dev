@@ -7,7 +7,8 @@
 > it. A few scripts that call `sf` themselves still set it on their own `sf` calls
 > (`scripts/build_quote_to_asset.py`, `scripts/qb_usage.py`, the DF workshop scripts), and
 > `docker/README.md` uses it once for `sf org auth show-sfdx-auth-url`. Those are deliberate
-> and don't involve CumulusCI. **Fix: upgrade CumulusCI** (`pipx upgrade cumulusci`), then remove any personal copy of the flag
+> and don't involve CumulusCI. **Fix: upgrade CumulusCI** (`pipx upgrade cumulusci`, then
+> `pipx inject --force cumulusci -r robot/requirements.txt` to restore selenium 4), then remove any personal copy of the flag
 > ([Removal steps](#removal-steps-once-the-official-fix-lands)). The rest of this page is
 > kept for anyone still on CumulusCI 4.10.0 or earlier.
 
@@ -58,10 +59,12 @@ CCI receives the redacted placeholder instead of the real token and sends a malf
 
 ## The fix
 
-**Upgrade CumulusCI to 4.10.1 or later** (`pipx upgrade cumulusci`). If your pipx CumulusCI was built on Python 3.10, `pipx upgrade` can't install 4.10.1
+**Upgrade CumulusCI to 4.10.1 or later** (`pipx upgrade cumulusci`, then
+`pipx inject --force cumulusci -r robot/requirements.txt`, since CCI's own pins
+downgrade selenium). If your pipx CumulusCI was built on Python 3.10, `pipx upgrade` can't install 4.10.1
 (it needs Python 3.11–3.13); rebuild it on a supported interpreter with
-`pipx reinstall cumulusci --python "$(pyenv prefix)/bin/python3"` or
-`scripts/bash/update-toolchain.sh`. This project now
+`pipx reinstall cumulusci --python "$(pyenv prefix)/bin/python3"` and the same
+Robot re-inject, or `scripts/bash/update-toolchain.sh`. This project now
 requires it (`minimum_cumulusci_version: "4.10.1"` in `cumulusci.yml`), so an older CCI
 stops with a version error rather than `INVALID_AUTH_HEADER`.
 
@@ -169,8 +172,7 @@ Scripts that call Salesforce REST themselves get the token from `scripts/sf_toke
 (`org_auth(alias)`). It takes the instance URL from `sf org display`, checks the token
 (a real one starts with the org's `00D` Id prefix), and when it isn't real fetches it with
 `sf org auth show-access-token --json`, which `sf` never redacts. The token is never logged or
-put in an error. `scripts/cml/export_cml.py`, `scripts/cml/import_cml.py` and
-`scripts/docgen/docgen_template_manage.py` use it; `scripts/txn_data_harness/auth.py` already
+put in an error. `scripts/docgen/docgen_template_manage.py` uses it; `scripts/txn_data_harness/auth.py` already
 used `show-access-token`. New scripts that need a token should use the helper rather than
 parsing `sf org display`. Offline tests: `tests/test_sf_token.py`. CumulusCI's own token reads
 are covered by CumulusCI 4.10.1 itself (see the status note at the top).
@@ -219,6 +221,7 @@ token-redaction fix (4.10.1 had it), then:
 
 ```bash
 pipx upgrade cumulusci                       # or to a specific fixed version
+pipx inject --force cumulusci -r robot/requirements.txt   # CCI's pins downgrade selenium
 # then remove the workaround:
 launchctl unload -w ~/Library/LaunchAgents/com.example.sf-temp-show-secrets.plist   # -w mirrors the -w used on load
 rm ~/Library/LaunchAgents/com.example.sf-temp-show-secrets.plist

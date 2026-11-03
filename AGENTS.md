@@ -55,11 +55,9 @@ Key technology stack:
 `unpackaged/post_*/` holds feature bundles. `templates/` is the UX source
 (step 30); `unpackaged/post_ux/` is generated output.
 
-Data lives under `datasets/`; utility scripts under `scripts/`; offline tests
-under `tests/`; Robot suites under `robot/rlm-base/`. `datasets/bre/` and
-`datasets/dx/` are runtime extraction output, not tracked source. See the
-[repository map](docs/references/repository-layout.md), [org definitions](orgs/README.md),
-[TFID guide](orgs/tfid/README.md), and **Script Reference** below for detail.
+Paths: `datasets/`, `scripts/`, `tests/`, `robot/rlm-base/`. `datasets/bre/` and
+`datasets/dx/` are untracked runtime output. See the [repository map](docs/references/repository-layout.md),
+[org definitions](orgs/README.md), [TFID guide](orgs/tfid/README.md), and **Script Reference**.
 
 ## DO NOT — Safety Guards
 
@@ -162,11 +160,11 @@ in the array; deletions run child → parent.
 
 ```bash
 cci task run insert_quantumbit_pricing_data --org beta
-cci task run delete_quantumbit_pricing_data --org beta
+cci task run delete_quantumbit_pricing_data --org beta     # manual full teardown; prepare_pricing_data reloads in place
 cci task run extract_qb_pricing_data --org beta
 cci task run test_qb_pricing_idempotency --org beta
 cci flow run prepare_rlm_org --org beta
-cci task run assemble_and_deploy_ux                                 # deploys to your DEFAULT cci org (no --org flag — set the default org to target one)
+cci task run assemble_and_deploy_ux --org beta
 cci task run assemble_and_deploy_ux -o deploy false                 # dry-run: local assembly only, no org needed
 python scripts/ux/ux_tool.py capture-drift --target-org <sf_alias>   # retrieve + diff
 python scripts/ux/ux_tool.py apply-drift                            # writeback + verify + reassemble
@@ -296,7 +294,7 @@ that topic.
 
 | I need to... | Skill File (relative to repo root) |
 |-------------|-------------------------------------|
-| Set up / replicate / update the local dev toolchain | `docs/guides/dev-environment-setup.md` |
+| Set up / replicate / update the local dev toolchain | `.cursor/skills/toolchain/SKILL.md` |
 | Run the containerized toolchain (Docker image + `rlm` wrapper + devcontainer) | `docker/README.md` |
 | Add new features, code placement | `.cursor/skills/repo-integration/SKILL.md` |
 | Work with CCI tasks, flows, CLI | `.cursor/skills/cci-orchestration/SKILL.md` |
@@ -312,13 +310,15 @@ that topic.
 | Create/modify SFDMU data plans | `.cursor/skills/sfdmu-data-plans/SKILL.md` |
 | Maintain the In-App Learning framework (`inapp` integration) | `.cursor/skills/inapp-framework/SKILL.md` |
 | Understand RLM objects/relationships | `.cursor/skills/revenue-cloud-data-model/SKILL.md` |
+| DRO plans | `.cursor/skills/dro-plans/SKILL.md` |
 | Build/rate/verify metered consumption demos (usage, commitments, drawdown) | `.cursor/skills/usage-consumption/SKILL.md` |
-| Create renewal-ready assets across the 4 expiry windows + layer lifecycle event history (Renewal/Upsell/Downsell) | `.cursor/skills/renewal-asset-creation/SKILL.md` |
-| Prep a clone as a DF Hands-On workshop org (capture/replay seeded quotes+config, verify before templating) | `.cursor/skills/df-workshop-setup/SKILL.md` |
+| Build renewal-ready assets and lifecycle event history | `.cursor/skills/renewal-asset-creation/SKILL.md` |
+| Prepare DF Hands-On clone orgs and verify seeded data | `.cursor/skills/df-workshop-setup/SKILL.md` |
 | Validate / refresh / certify the ERD against orgs and Core source | `.cursor/skills/schema-validation/SKILL.md` |
 | Consume PMOS content from Foundations (or vice versa) via cross-repo skill manifest | `.cursor/skills/pmos-integration/SKILL.md` |
+| Stand up / debug the **MCP surface** (hosted + custom servers, ECA) | `.cursor/skills/mcp-integration/SKILL.md` |
 | Use Revenue Cloud REST APIs | `.cursor/skills/rlm-business-apis/SKILL.md` |
-| Build/verify a multi-year group **ramp** quote (place→EditGroup→clone) + per-segment/compound uplift | `.cursor/skills/ramped-quotes/SKILL.md` |
+| Build/verify multi-year ramp quotes and segment uplift | `.cursor/skills/ramped-quotes/SKILL.md` |
 | Generate, inspect, continue, or verify transaction demo data | `.cursor/skills/txn-data-harness/SKILL.md` |
 | Write Robot Framework tests | `.cursor/skills/robot-testing/SKILL.md` |
 | Capture/apply UX drift from org | `.cursor/skills/repo-integration/ux-assembly-retrieve.md` |
@@ -332,6 +332,7 @@ that topic.
 | Ground product claims against Salesforce Help (Trailhead, internal docs, SME review) | `.cursor/skills/revenue-cloud-docs/SKILL.md` |
 | Author/debug OmniDataTransform (ODT) data mappers | `.cursor/skills/odt-authoring/SKILL.md` |
 | Create/modify .docx document templates + DocumentTemplate lifecycle | `.cursor/skills/document-generation/SKILL.md` |
+| Set up, query, author, or troubleshoot Salesforce Contracts CLM | `.cursor/skills/salesforce-contracts/SKILL.md` |
 
 Every top-level skill has a **Quick Rules** section, and most have **DO NOT**;
 new and migrated skills should also include **Entry Conditions**, **Examples**,
@@ -359,7 +360,7 @@ reference and worked examples. Read that skill rather than guessing flags:
 | `scripts/erd/*` — ERD validation against orgs, cross-release schema diff, orphan cleanup, HTML build | `schema-validation/SKILL.md` |
 | `scripts/context_service/*` — Context Definition inspect/validate/apply, plus the runtime context-instance lifecycle | `context-service/SKILL.md` |
 | `scripts/expression_sets/*` — Expression Set inspect/trace/diff/export and guarded mutators | `expression-sets/SKILL.md` |
-| `scripts/cml/*` — constraint model export/import/validate | `constraint-models/SKILL.md` |
+| `tasks/rlm_cml.py` — constraint model tasks | `constraint-models/SKILL.md` |
 | `scripts/ux/*` — CCI-free UX assembly, deploy, drift diff, writeback | `repo-integration/SKILL.md` |
 | `scripts/renewal_assets/*` — renewal-asset expiry-bucket spread (`build_renewal_buckets.py`, reuses `build_quote_to_asset.py`) + lifecycle event-history augment/reset Apex | `renewal-asset-creation/SKILL.md` |
 | `scripts/df_workshop/*` — capture (`extract_workshop_quotes.py`) and replay (`insert_workshop_quotes.py`) DF workshop org drift | `df-workshop-setup/SKILL.md` |

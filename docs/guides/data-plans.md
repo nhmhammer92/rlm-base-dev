@@ -15,10 +15,10 @@ Data plans provide the reference data loaded during org setup. This project uses
 ### SFDMU Data Plans
 
 > **Requires SFDMU v5.6.4+.** Re-run safety depends on the plan, its orchestration,
-> and the target org's existing data. Read the per-plan README before reloading:
-> `qb-pricing` retains Insert objects and uses a separate delete task in its flow;
-> `qb-rating` and `qb-rates` retain Insert + `deleteOldData` operations whose deletes
-> can be blocked by live records. See [reloading a plan into a live org](../../.cursor/skills/sfdmu-data-plans/SKILL.md#reloading-a-plan-into-a-live-org)
+> and the target org's existing data. Read the per-plan README before reloading.
+> `qb-pricing`, `qb-rates`, `qb-rating` and `qb-rating-entitlements` match existing rows
+> and delete nothing, so they reload a built org cleanly (todo 298). Fields locked on
+> Active records (an Active rate card entry accepts only Status) still need a manual step. See [reloading a plan into a live org](../../.cursor/skills/sfdmu-data-plans/SKILL.md#reloading-a-plan-into-a-live-org)
 > for these limitations and [Composite Key Optimizations](../../docs/references/sfdmu-composite-key-optimizations.md)
 > for migration history.
 
@@ -119,6 +119,7 @@ precedence over that base. See the [extraction task](../../tasks/rlm_sfdmu.py).
 | qb-pcm | `datasets/sfdmu/qb/en-US/qb-pcm/` | Product Catalog Management -- products, classifications, components, attributes | [README](../../datasets/sfdmu/qb/en-US/qb-pcm/README.md) |
 | qb-product-images | `datasets/sfdmu/qb/en-US/qb-product-images/` | Product images and content document links | [README](../../datasets/sfdmu/qb/en-US/qb-product-images/README.md) |
 | qb-pricing | `datasets/sfdmu/qb/en-US/qb-pricing/` | Pricing data (pricebook entries, price adjustments) | [README](../../datasets/sfdmu/qb/en-US/qb-pricing/README.md) |
+| qb-price-revision | `datasets/sfdmu/qb/en-US/qb-price-revision/` | CPI index rates (Region US) and Price Index / Flat price revision policies | [README](../../datasets/sfdmu/qb/en-US/qb-price-revision/README.md) |
 | qb-tax | `datasets/sfdmu/qb/en-US/qb-tax/` | Tax engine data (tax treatments, policies) | [README](../../datasets/sfdmu/qb/en-US/qb-tax/README.md) |
 | qb-billing | `datasets/sfdmu/qb/en-US/qb-billing/` | Billing data (billing terms, schedules) | [README](../../datasets/sfdmu/qb/en-US/qb-billing/README.md) |
 | qb-dro | `datasets/sfdmu/qb/en-US/qb-dro/` | Dynamic Revenue Orchestration plans | [README](../../datasets/sfdmu/qb/en-US/qb-dro/README.md) |
@@ -136,7 +137,7 @@ precedence over that base. See the [extraction task](../../tasks/rlm_sfdmu.py).
 
 | Data Plan | Directory | Description | Documentation |
 |-----------|-----------|-------------|---------------|
-| procedure-plans | `datasets/sfdmu/procedure-plans/` | Procedure Plan sections and options with expression set links (2-pass upsert + Connect API + activation) | [README](../../datasets/sfdmu/procedure-plans/README.md) |
+| procedure-plans | `datasets/sfdmu/procedure-plans/` | Procedure Plan sections and options with expression set links (2-pass upsert + Connect API; activation only with `procedureplans_active`) | [README](../../datasets/sfdmu/procedure-plans/README.md) |
 
 Procedure-plan overlays that require resolved parent IDs live under
 `datasets/procedure_plan_overlays/` and are applied by dedicated CCI tasks
@@ -159,9 +160,7 @@ Constraint model data is managed by the Python-based CML utility (`tasks/rlm_cml
 
 | Model | Directory | ESC Records | Active after `prepare_constraints`? |
 |-------|-----------|-------------|-------------------------------------|
-| QuantumBitBundle | `datasets/constraints/qb/QuantumBitBundle/` | 61 | **yes** — the active QuantumBit model |
-| QuantumBitComplete | `datasets/constraints/qb/QuantumBitComplete/` | 57 | no — imported inactive, kept for A/B |
-| QuantumBitPCM | `datasets/constraints/qb/QuantumBitPCM/` | 12 | no — imported inactive, kept for A/B |
+| QuantumBitBundle | `datasets/constraints/qb/QuantumBitBundle/` | 61 | **yes** — the QuantumBit model |
 | Server2 | `datasets/constraints/qb/Server2/` | 81 | **yes** — hardware model, not part of the QuantumBit family |
 
 Exactly one QuantumBit model may be active at a time; `Server2` is a separate model and

@@ -271,9 +271,14 @@ check("an ERD data change selects the ERD count check", "erd_doc_counts" in sel,
 # any tracked text file. The two cheap whole-repo checks (navigation baseline and
 # release_refs) therefore run for every non-empty change, while unrelated expensive checks
 # stay skipped.
-sel = selected_names(["docker/Dockerfile"])
+sel = selected_names(["docker/compose.yaml"])
 check("an otherwise unrelated path selects only the two whole-repo baselines",
       sel == {"agent_tooling", "release_refs"}, sel)
+# docker/Dockerfile used to be that unrelated path; it names the Node major line now, so it selects
+# the one cheap check that compares it with .nvmrc — and still nothing expensive.
+sel = selected_names(["docker/Dockerfile"])
+check("a Dockerfile change selects the Node-line check and nothing expensive",
+      sel == {"agent_tooling", "release_refs", "node_line"}, sel)
 # A suffix selector, for the check that walks every .md in the repo. Prefix triggers left
 # the root README and seven datasets/**/README.md build-step citations unable to select the
 # suite that audits them.
@@ -285,9 +290,13 @@ check("a data plan README selects the build-step check",
           ["datasets/sfdmu/qb/en-US/qb-billing/README.md"]))
 check("a non-markdown file does not select it via the suffix",
       "doc_build_steps" not in selected_names(["robot/x.robot"]))
-check("only the whole-repo check carries a suffix selector",
-      [c["name"] for c in pr_gate.CHECKS if c.get("suffixes")] == ["doc_build_steps"],
+check("only the whole-repo checks carry a suffix selector",
+      [c["name"] for c in pr_gate.CHECKS if c.get("suffixes")]
+      == ["permission_set_dependencies", "doc_build_steps"],
       [c["name"] for c in pr_gate.CHECKS if c.get("suffixes")])
+check("a permission set selects the Account/Contact dependency check via the suffix",
+      "permission_set_dependencies" in selected_names(
+          ["unpackaged/post_billing_ui/permissionsets/RLM_BillingUI.permissionset-meta.xml"]))
 check("a harness change selects the harness suites",
       "harness_suites" in selected_names(["scripts/txn_data_harness/cli.py"]))
 check("an empty change set selects nothing", selected_names([]) == set())
@@ -1244,7 +1253,7 @@ if os.path.exists(workflow):
         return found[0] if len(found) == 1 else (None, {})
 
     gate_job_name, gate_job = job_with("scripts/ai/pr_gate.py",
-                                       exclude=("--requirements", "--list", "--help"))
+                                       exclude=("--requirements", "--needs-node", "--list", "--help"))
     check("exactly one job runs the gate", gate_job_name, list(doc.get("jobs") or {}))
     # A whitelist of job keys, not a search for `if:`. `continue-on-error:` at job level, and
     # `defaults: {run: {shell: …}}` — which replaces the shell for *every* step in the job and so
@@ -1277,6 +1286,7 @@ if os.path.exists(workflow):
     # rest of the file, not about the step, and it is the argument that stops being true after an edit.
     STEP_KEYS = {"Checkout repository": {"name", "uses", "with"},
                  "Set up Python": {"name", "uses", "with"},
+                 "Set up Node": {"name", "uses", "with"},
                  "Resolve the base ref": {"name", "id", "env", "run"},
                  "Install only what the selection needs": {"name", "env", "run"},
                  "Run the gate": {"name", "run"},
@@ -1975,7 +1985,7 @@ if os.path.exists(workflow):
         return len(segs) == 1 and segs[0][0].split()[:1] == ["echo"]
 
     found_gate = steps_named(gate_job, "scripts/ai/pr_gate.py",
-                             exclude=("--requirements", "--list", "--help"))
+                             exclude=("--requirements", "--needs-node", "--list", "--help"))
     # Reachability for the other shell steps, and stated precisely, because the first version of this
     # comment claimed an early exit there "ends the job" — each `run:` is its own shell, so it ends
     # that *step*, successfully, and the job continues. What it actually costs: the resolver exits
@@ -2996,9 +3006,12 @@ if os.path.exists(workflow):
     # the round-6 mistake — a rule scoped to the thing it protects — one level up, at job scope. So the
     # job is whitelisted whole: which steps exist, which actions they may use, and what their shell may
     # say. Four of these five shapes survived the round-8 suite.
-    JOB_STEPS = ["Checkout repository", "Set up Python", "Resolve the base ref",
+    JOB_STEPS = ["Checkout repository", "Set up Python", "Set up Node", "Resolve the base ref",
                  "Install only what the selection needs", "Run the gate", "Branch scope"]
-    JOB_USES = {"Checkout repository": "actions/checkout", "Set up Python": "actions/setup-python"}
+    # setup-node installs a runtime on the runner and touches no file in the checkout; its one input
+    # is pinned below to `.nvmrc`, so it cannot be pointed at another Node line.
+    JOB_USES = {"Checkout repository": "actions/checkout", "Set up Python": "actions/setup-python",
+                "Set up Node": "actions/setup-node"}
     # A full commit SHA only. A tag can be repointed, which is how a pinned action stops being
     # trusted; the ESAG GitHub Actions Security Guide requires SHA pins, and the repository's
     # "require full-length commit SHA" setting refuses anything else at "Set up job". (The first
@@ -3025,7 +3038,8 @@ if os.path.exists(workflow):
     # is decided inside `pip_install_ok`, not by a constant here.
     PIP_PAYLOAD = "${reqs}"
     JOB_ASSIGN = ALLOWED_ASSIGN + (
-        'reqs="$(python scripts/ai/pr_gate.py --requirements ${SEL})"',)
+        'reqs="$(python scripts/ai/pr_gate.py --requirements ${SEL})"',
+        'node="$(python scripts/ai/pr_gate.py --needs-node ${SEL})"',)
     # A redirection is how a step writes to the checkout, so its *target* is the rule. The four
     # GitHub-provided files are how steps legitimately pass values on; /dev/null is how `git rev-parse
     # --verify` stays quiet.
@@ -3091,6 +3105,10 @@ if os.path.exists(workflow):
             return set_line_ok(words)
         if re.match(r"^[A-Za-z_][A-Za-z_0-9]*=", w0):
             return re.sub(r"\s+", "", seg) in [re.sub(r"\s+", "", f) for f in JOB_ASSIGN]
+        if w0 == "npm":
+            # One form only: a clean install from the committed lockfile with install scripts off.
+            # `npm install` would rewrite the lockfile, and a dependency's postinstall is code.
+            return " ".join(words) == "npm ci --ignore-scripts --no-audit --no-fund"
         if w0 == "git":
             # Pinning the subcommand and not its arguments left the base ref writable *locally*:
             # `git fetch . "+HEAD:refs/remotes/origin/${BASE_REF}"` moves origin/<base> onto the PR
@@ -3365,7 +3383,8 @@ if os.path.exists(workflow):
     # against actually comes from: `BASE: HEAD` leaves both permitted `SEL` lines untouched and makes
     # the selection `HEAD...HEAD`. So the inputs are pinned alongside the identities.
     JOB_WITH = {"Checkout repository": {"fetch-depth": "0", "persist-credentials": "false"},
-                "Set up Python": {"python-version": None}}
+                "Set up Python": {"python-version": None},
+                "Set up Node": {"node-version-file": ".nvmrc", "package-manager-cache": "false"}}
     JOB_ENV = {"Resolve the base ref": {"BASE_REF": "${{ github.base_ref }}"},
                "Install only what the selection needs": {"BASE": "${{ steps.base.outputs.ref }}"}}
     def inputs_of(step):
@@ -3395,7 +3414,7 @@ if os.path.exists(workflow):
            if "env" in s and s.get("name") in JOB_ENV} == JOB_ENV,
           {s.get("name"): s.get("env") for s in job_steps if "env" in s})
     check("with no other step carrying an env block this rule would not read",
-          {s.get("name") for s in job_steps if "env" in s} == set(JOB_ENV) | {JOB_STEPS[5]},
+          {s.get("name") for s in job_steps if "env" in s} == set(JOB_ENV) | {"Branch scope"},
           # `or "<unnamed>"` for the same reason as the other four sites: an unnamed step carrying an
           # `env:` block puts None in this set, and `sorted()` cannot order it against str — so the
           # rule that exists to notice an unpinned env would crash instead of reporting it.
@@ -4004,6 +4023,12 @@ NOT_INPUTS = {
         # there is selectable, which is the very asymmetry this suite exists to pin.
         ".agents/artifacts": "gitignored: cannot appear in a diff, so cannot select anything",
         ".agents/artifacts/integration-staging/pmos-integration.md": "gitignored",
+        # The discovery checks (issue #593) build throwaway clones in a temp dir. Their hint
+        # resolves beside REPO only on a workstation laid out that way, which is why it
+        # surfaced locally and would not in CI.
+        "../rlm-base-dev": "a local_path_hint resolved inside a throwaway temp tree",
+        ".claude/skills": "a skill surface created inside a throwaway clone",
+        ".cursor/skills": "a skill surface created inside a throwaway clone",
     },
     "tests/test_fix_scratch_identity.py": {
         ".sf/orgs": "runtime org state, gitignored — not a repo input",
@@ -4491,6 +4516,64 @@ check("the gate reads no environment variable under any spelling — attribute, 
       "variable, and only with a reason a CI-only behaviour change is acceptable)",
       not unallowed, sorted(unallowed))
 
+# The rule above reads pr_gate.py's own source, so a sibling module it imports is a way around it:
+# `import gate_python` reaches $RLM_GATE_PYTHON without an `environ` node here. Every such import is
+# declared, with the one function allowed to make it and the reason the behaviour it steers is
+# acceptable — the same bargain ENV_READS_OK asks for, made visible instead of inherited.
+SIBLING_IMPORTS_OK = {
+    # $RLM_GATE_PYTHON picks the interpreter the gate re-runs under, and only when this interpreter
+    # lacks a selected check's dependency. CI installs the selection's deps, so it never gets here,
+    # and the verdicts still come from the same checks run against the same tree.
+    "gate_python": "reexec_under_gate_interpreter",
+}
+siblings = {path.stem for path in pathlib.Path(os.path.join(REPO, "scripts", "ai")).glob("*.py")}
+
+
+def sibling_imports_in(tree):
+    """(module, enclosing top-level function or '<module>', line) for each import of a sibling.
+
+    Every spelling, as the env rule above learned to: the import statements, and the dynamic
+    `importlib.import_module("x")` / `__import__("x")` with the name as a literal.
+    """
+    owner_of = {}
+    for fn in tree.body:
+        if isinstance(fn, ast.FunctionDef):
+            for inner in ast.walk(fn):
+                owner_of[id(inner)] = fn.name
+    found = []
+    for node in ast.walk(tree):
+        names = ([a.name for a in node.names] if isinstance(node, ast.Import)
+                 else [node.module] if isinstance(node, ast.ImportFrom) and node.module else [])
+        if (isinstance(node, ast.Call) and node.args and isinstance(node.args[0], ast.Constant)
+                and isinstance(node.args[0].value, str)
+                and (getattr(node.func, "attr", None) == "import_module"
+                     or getattr(node.func, "id", None) in ("__import__", "import_module"))):
+            names = [node.args[0].value]
+        found += [(name, owner_of.get(id(node), "<module>"), node.lineno)
+                  for name in names if name.split(".")[0] in siblings]
+    return found
+
+
+sibling_imports = sibling_imports_in(gate_tree)
+# Positive controls: an undeclared sibling import, and the declared one moved to module level.
+check("that rule can actually see a sibling import, at module level or inside a function",
+      [n for n, *_ in sibling_imports_in(ast.parse("import check_branch_scope\n"
+                                                   "def f():\n    from gate_python import resolve\n"))]
+      == ["check_branch_scope", "gate_python"])
+check("and a dynamic import of a sibling is seen too, under either spelling",
+      [n for n, *_ in sibling_imports_in(ast.parse(
+          "import importlib\ndef f():\n    importlib.import_module('check_branch_scope')\n"
+          "def g():\n    __import__('gate_python')\n"))] == ["check_branch_scope", "gate_python"])
+check("and a declared module imported outside its declared function is refused",
+      not all(SIBLING_IMPORTS_OK.get(n) == o
+              for n, o, _ in sibling_imports_in(ast.parse("import gate_python\n"))))
+check("pr_gate.py imports a sibling script only where SIBLING_IMPORTS_OK declares it, so an environment "
+      "read it inherits that way is named here with a reason, like one made directly",
+      all(SIBLING_IMPORTS_OK.get(n) == owner for n, owner, _ in sibling_imports), sibling_imports)
+check("and the declared gate_python import is still where the map says, so the map cannot go stale",
+      ("gate_python", "reexec_under_gate_interpreter") in {(n, o) for n, o, _ in sibling_imports},
+      sibling_imports)
+
 # `sys.argv` is the other input that differs between the two populations, and it differs for free: the
 # workflow invokes `python scripts/ai/pr_gate.py`, every fixture here imports the module. So
 # `os.path.basename(sys.argv[0]) != "pr_gate.py"` is an if-in-CI with no environment read in it. argparse
@@ -4514,6 +4597,51 @@ abs_literals = sorted({node.value for node in ast.walk(gate_tree)
 check("and contains no absolute-path literal, the remaining way to ask 'am I on a hosted runner' "
       "without reading a variable — every path the gate uses is derived from __file__",
       not abs_literals, abs_literals)
+
+# The LWC Jest check (lwc_jest). CI runs `npm ci` only when `--needs-node` says a selected check
+# needs Node, so the selection and the dependency probe are what keep it honest: selected for any
+# component directory, and MISSING-DEP — a failure — when Node packages are absent.
+_jest = next((c for c in pr_gate.CHECKS if c["name"] == "lwc_jest"), None)
+check("lwc_jest exists and gates", _jest is not None and _jest["gating"] is True)
+check("it is selected by a change under any `lwc` directory: a bundle, force-app, a nested layout, "
+      "and a bundle that no longer exists on disk (a deletion)",
+      _jest is not None and all(pr_gate.selects(_jest, [f]) for f in (
+          "unpackaged/post_utils/lwc/rlmDecisionTableManager/x.js",
+          "force-app/main/default/lwc/x/x.js",
+          "unpackaged/post_new/main/default/lwc/y/y.js",
+          "unpackaged/post_deleted_bundle/lwc/z/z.js")))
+check("and by sfdx-project.json, whose package directories decide how `c/` imports resolve",
+      _jest is not None and pr_gate.selects(_jest, ["sfdx-project.json"]))
+check("and not by an unrelated change, nor by a file merely named lwc",
+      _jest is not None and not pr_gate.selects(_jest, ["tasks/rlm_x.py"])
+      and not pr_gate.selects(_jest, ["docs/lwc"]))
+_absent = dict(_jest or {}, node_deps=["node_modules/.bin/no-such-binary-for-this-test"])
+check("a missing Node package is reported missing, so the gate fails rather than skips",
+      any("no-such-binary" in m for m in pr_gate.missing_deps(_absent)), pr_gate.missing_deps(_absent))
+_needs = subprocess.run([sys.executable, os.path.join(REPO, "scripts", "ai", "pr_gate.py"), "--needs-node",
+                         "--changed-files-from", "/dev/stdin"], input="unpackaged/post_utils/lwc/a/a.js\n",
+                        capture_output=True, text=True, cwd=REPO)
+_no_needs = subprocess.run([sys.executable, os.path.join(REPO, "scripts", "ai", "pr_gate.py"), "--needs-node",
+                            "--changed-files-from", "/dev/stdin"], input="tasks/rlm_x.py\n",
+                           capture_output=True, text=True, cwd=REPO)
+_spec = importlib.util.spec_from_file_location(
+    "_run_lwc_jest", os.path.join(REPO, "scripts", "ai", "run_lwc_jest.py"))
+_wrapper = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_wrapper)
+_ok = {"numPassedTests": 13, "numTotalTests": 13, "numTotalTestSuites": 1, "success": True}
+check("the Jest wrapper passes a clean report", _wrapper.verdict(_ok, 0)[0] == 0, _wrapper.verdict(_ok, 0))
+check("and fails one where every test was skipped, which Jest itself calls a success",
+      _wrapper.verdict({"numPassedTests": 0, "numPendingTests": 13, "numTotalTests": 13, "success": True}, 0)[0] == 1)
+check("and one with a single skipped or todo test among passes",
+      _wrapper.verdict(dict(_ok, numTodoTests=1), 0)[0] == 1
+      and _wrapper.verdict(dict(_ok, numPendingTests=1), 0)[0] == 1)
+check("and one with a failure, a failed suite, a non-zero Jest exit, or success false",
+      all(_wrapper.verdict(r, c)[0] == 1 for r, c in (
+          (dict(_ok, numFailedTests=1), 0), (dict(_ok, numFailedTestSuites=1), 0),
+          (_ok, 1), (dict(_ok, success=False), 0))))
+check("--needs-node answers true for an LWC change and false otherwise, which is what CI's `npm ci` keys on",
+      (_needs.stdout.strip(), _no_needs.stdout.strip()) == ("true", "false"),
+      (_needs.stdout, _needs.stderr[-300:], _no_needs.stdout))
 
 # The other way a verdict disappears between producing it and reporting it: exempt one check by name.
 # `if check["name"] != "pr_gate_suite": failures.append(...)` still prints `[FAIL] pr_gate_suite` — the
@@ -4793,7 +4921,10 @@ VERDICT_REGIONS = {
     # Repinned in the wave that split tool errors out of failures: a runner returning 2 was booked as a
     # FAIL and exited 1, publishing a code verdict on a check that produced none. This rule is what
     # made that a deliberate edit rather than a quiet one, which is exactly its purpose.
-    "the booking loop and main()'s return": ("a88508e61f7f", "which verdicts reach the exit code"),
+    # Repinned when the script entry point became `main(reexec=True)`: run by path, the gate re-runs
+    # itself under the gate interpreter when this one lacks a selected check's dependency. The booking
+    # loop and every return are untouched; CI installs the selection's deps, so it never re-runs.
+    "the booking loop and main()'s return": ("4b9962703135", "which verdicts reach the exit code"),
 }
 observed = {
     "run()": fingerprint(body_of(gate_src, "def run(", "the command runner")),
@@ -4806,6 +4937,83 @@ for region, (pinned, decides) in VERDICT_REGIONS.items():
           f"hosted runner (a tool-cache path, a mounted volume) is invisible to every behavioural "
           f"fixture here, so this region changes only by updating VERDICT_REGIONS deliberately",
           observed[region] == pinned, f"observed {observed[region]}, pinned {pinned}")
+
+print("\nRe-running under the gate interpreter")
+# Run by path, the gate replaces itself with the gate interpreter when this one lacks a selected
+# check's dependency. Driven in-process with the resolver and os.execv stubbed, so nothing execs.
+import gate_python  # noqa: E402
+
+FAKE_CHECK = {"name": "fake", "deps": ["cumulusci"], "gating": True}
+# Not a repo path: a stand-in interpreter that is never run, spelled without a literal path.
+FAKE_GATE = os.path.join(os.sep, "x", ".venv", "bin", "python")
+
+
+def reexec_outcome(missing, problems_result, here=None, exec_error=None):
+    """(exec argv or None, printed text, whether the resolver was consulted) for one scenario."""
+    calls, consulted = [], []
+    saved = (pr_gate.missing_deps, gate_python.problems, os.execv, sys.executable)
+    buf = io.StringIO()
+    try:
+        pr_gate.missing_deps = lambda check: list(missing)
+        gate_python.problems = lambda start: consulted.append(start) or problems_result
+        def fake_execv(path, argv):
+            if exec_error:
+                raise exec_error
+            calls.append(argv)
+        os.execv = fake_execv
+        if here:
+            sys.executable = here
+        with redirect_stdout(buf):
+            pr_gate.reexec_under_gate_interpreter([FAKE_CHECK], ["--base", "origin/main"])
+    finally:
+        pr_gate.missing_deps, gate_python.problems, os.execv, sys.executable = saved
+    return (calls[0] if calls else None), buf.getvalue(), bool(consulted)
+
+
+argv, out, consulted = reexec_outcome([], (pathlib.Path(FAKE_GATE), []))
+check("nothing missing: no re-run, and the resolver is not even consulted",
+      argv is None and not consulted, (argv, consulted))
+argv, out, _ = reexec_outcome(["cumulusci"], (pathlib.Path(FAKE_GATE), ["lacks: cumulusci"]))
+check("a dependency missing and the gate interpreter unusable: no re-run, and the reason is printed "
+      "so the MISSING-DEP that follows is explained", argv is None and "lacks: cumulusci" in out, out)
+argv, out, _ = reexec_outcome(["cumulusci"], (pathlib.Path(FAKE_GATE), []))
+check("a dependency missing and a usable gate interpreter elsewhere: re-run under it with the same "
+      "arguments, marked --no-reexec so the re-run can never loop",
+      argv == [FAKE_GATE, os.path.abspath(pr_gate.__file__), "--base", "origin/main",
+               "--no-reexec"], argv)
+argv, out, _ = reexec_outcome(["cumulusci"], (pathlib.Path(FAKE_GATE), []),
+                              here=FAKE_GATE)
+check("already the gate interpreter: no re-run (its own probe decides what's missing)", argv is None, argv)
+try:
+    argv, out, _ = reexec_outcome(["cumulusci"], (pathlib.Path(FAKE_GATE), []),
+                                  exec_error=PermissionError(13, "denied"))
+    exec_escaped = None
+except OSError as exc:
+    argv, out, exec_escaped = None, "", exc
+check("an interpreter that can't be exec'd (gone or not executable since the probe) is a note and an "
+      "in-process run, never a traceback whose exit 1 reads as a verdict",
+      exec_escaped is None and "could not start" in out, (exec_escaped, out))
+
+# A selected check with a missing dependency is exactly the case that would re-run from the script;
+# in-process it must book MISSING-DEP instead of replacing the test runner.
+prior = (pr_gate.reexec_under_gate_interpreter, pr_gate.CHECKS, pr_gate.missing_deps)
+reran = []
+try:
+    pr_gate.reexec_under_gate_interpreter = lambda *a: reran.append(a)
+    pr_gate.CHECKS = [dict(FAKE_CHECK, triggers=["README.md"], cmd=[])]
+    pr_gate.missing_deps = lambda check: ["cumulusci"]
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as fh:
+        fh.write("README.md\n")
+    code, out = main_with(["--changed-files-from", fh.name])
+    os.unlink(fh.name)
+finally:
+    pr_gate.reexec_under_gate_interpreter, pr_gate.CHECKS, pr_gate.missing_deps = prior
+check("main() driven in-process never re-runs, even with a selected dependency missing: only the "
+      "script entry point passes reexec=True", not reran and "MISSING-DEP" in out and code == 1,
+      (reran, code, out[-300:]))
+check("the script entry point is the only caller that asks for a re-run",
+      re.search(r'if __name__ == "__main__":\s*\n\s*sys\.exit\(main\(reexec=True\)\)', gate_src) is not None
+      and gate_src.count("reexec=True") == 1)
 
 print("\nCommand-line contract")
 code, out = run_gate("--list")
@@ -5197,7 +5405,7 @@ if FAILED:
 # fourth wave in a row to correct a hand-maintained figure. Pinned, so raising EXPECTED without
 # updating the sentence that quotes it is a failure rather than a reader's problem.
 README_COUNT = re.compile(r"Verified by `tests/test_pr_gate\.py` \((\d+) checks")
-EXPECTED = 716
+EXPECTED = 756
 _readme_text = pathlib.Path(os.path.join(REPO, "scripts/ai/README.md")).read_text()
 cited = README_COUNT.search(_readme_text)
 check("the check count quoted in scripts/ai/README.md matches EXPECTED, so the prose cannot drift "

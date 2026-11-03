@@ -57,18 +57,21 @@ scratch_data (Account, Contact, BillingAccount)
 
 procedure-plans (6 objects, 2 passes)
     Depends on: Expression sets deployed as metadata + Connect API (creates PPD+PPDV)
+
+qb-price-revision (2 objects, no lookups — independent)
+    IndexRate, PriceRevisionPolicy → refresh Index_Rate_Decision_Table after
 ```
 
 ## Deletion Order
 
 Deletions must run in reverse dependency order. SFDMU's `deleteOldData: true` handles per-object deletion in reverse array order within a plan, but cross-plan deletions must be sequenced manually.
 
-**Critical**: `delete_qb_rates_data` must run BEFORE `delete_qb_rating_data` — rates FK to PURs.
+**Critical**: `delete_qb_rates_data` must run BEFORE `delete_qb_rating_data` — rates FK to PURs. Neither runs in a flow any more: the qb pricing, rates and rating plans reload in place (todo 298), so these deletes are for a manual full teardown only.
 
 ```
 Delete order (for full teardown):
 1. qb-rates (RateAdjustmentByTier → RateCardEntry → PriceBookRateCard → RateCard)
-2. qb-rating (PUG → PURP → PUR → policies → UsageResource)
+2. qb-rating + qb-rating-entitlements (PUG → PURP → PUR → policies → UsageResource; `deleteQbRatingData.apex`)
 3. qb-pricing (adjustments → PricebookEntry → PriceAdjustmentSchedule → Pricebook2)
 4. qb-billing (treatments → BillingPolicy → PaymentTerm → LegalEntity)
 5. qb-tax (TaxTreatment → TaxPolicy → TaxEngine)

@@ -47,6 +47,19 @@ Usage:
     python scripts/ai/pr_gate.py --all                    # ignore selection, run everything
     python scripts/ai/pr_gate.py --list                   # print the matrix, run nothing
     python scripts/ai/pr_gate.py --requirements --base X  # extra pip deps the selection needs
+    python scripts/ai/pr_gate.py --needs-node --base X    # whether CI must `npm ci` (true/false)
+
+Run as a script, the gate re-runs itself under the gate interpreter (the main checkout's
+`.venv`, resolved by `gate_python.py`) when this interpreter lacks a selected check's
+dependency and that one has them all. On a workstation `python` is the pyenv Python, which
+`.envrc` selects and which never had the gate's packages, so a bare `python
+scripts/ai/pr_gate.py` would otherwise report MISSING-DEP for a setup reason. CI installs
+the selection's requirements into its own interpreter, so nothing is missing there and
+nothing re-runs. With no usable gate interpreter the run continues here, and MISSING-DEP
+reports what's absent. `gate_python.py` reads `$RLM_GATE_PYTHON` to name the gate
+interpreter, an environment read this file inherits by importing it. tests/test_pr_gate.py
+pins that import to `reexec_under_gate_interpreter`, so the variable can choose the
+interpreter on that missing-dependency path and nowhere else.
 """
 
 import argparse
@@ -56,6 +69,7 @@ import shutil
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -184,6 +198,16 @@ CHECKS = [
         deps=[], gating=True,
     ),
     dict(
+        name="permission_set_dependencies",
+        cmd=["python", "scripts/ai/check_permission_set_dependencies.py"],
+        # Account read depends on Contact read because of the person accounts in the TSO orgs;
+        # a permission set granting one without the other fails at deploy time. It reads every
+        # tracked permission set, so it selects on the suffix rather than a subtree.
+        triggers=["scripts/ai/check_permission_set_dependencies.py"],
+        suffixes=[".permissionset-meta.xml"],
+        deps=[], gating=True,
+    ),
+    dict(
         name="skill_manifest",
         cmd=["python", "scripts/ai/skill_manifest.py", "--check"],
         # The audit resolves every path the manifest cites, and the manifest cites paths all
@@ -283,7 +307,8 @@ CHECKS = [
         triggers=["docs/erds/", ".cursor/skills/revenue-cloud-data-model/",
                   ".cursor/skills/schema-validation/",
                   "scripts/ai/README.md", "tests/test_erd_doc_counts.py",
-                  "scripts/erd/build_erds.py", "scripts/erd/validate_erd_against_org.py"],
+                  "scripts/erd/build_erds.py", "scripts/erd/validate_erd_against_org.py",
+                  "scripts/erd/schema_diff/264-clm-schema.json"],
         deps=[], gating=True,
     ),
     dict(
@@ -365,6 +390,26 @@ CHECKS = [
         deps=[], gating=True,
     ),
     dict(
+        name="node_line",
+        cmd=["python", "tests/test_node_line.py"],
+        # Every file that names the Node major line, so bumping any one alone runs the check that
+        # they still agree with .nvmrc. Its own check rather than a STDLIB_SUITES entry: a Dockerfile
+        # or workflow edit should cost this sub-second suite, not the whole offline bundle.
+        triggers=[".nvmrc", ".envrc", "package.json", "docker/Dockerfile", ".github/workflows/",
+                  "scripts/bash/update-toolchain.sh", "tests/test_node_line.py",
+                  # The instructions that name the line, which the suite also compares. Every
+                  # guide, since the suite also checks none of them loads nvm a second way or
+                  # writes pyenv lines into a shell startup file.
+                  "docs/guides/",
+                  ".cursor/skills/troubleshooting/SKILL.md", ".cursor/skills/toolchain/SKILL.md",
+                  ".cursor/skills/toolchain/workstation-audit.md",
+                  ".cursor/skills/toolchain/verification-handoff.md",
+                  ".cursor/skills/toolchain/managed-workstations.md",
+                  "README.md", "CONTRIBUTING.md", "docker/README.md",
+                  "tasks/rlm_validate_setup.py"],
+        deps=[], gating=True,
+    ),
+    dict(
         name="doc_build_steps",
         cmd=["python", "tests/test_doc_build_steps.py"],
         # The suite walks every .md in the repo, so any .md must be able to select it.
@@ -383,6 +428,29 @@ CHECKS = [
         # try/except ImportError fallback — the module was never written to be importable without
         # it, and adding that guard is a bigger footprint than this pack (126 / #264-64) needs.
         triggers=["tasks/rlm_extend_stdctx.py", "tests/test_extend_stdctx.py"],
+        deps=["cumulusci"], gating=True,
+    ),
+    dict(
+        name="cci_task_org_option",
+        cmd=["python", "tests/test_cci_task_org_option.py"],
+        # Imports every task class in tasks/ the way cci does and asserts the ones that read
+        # org_config set salesforce_task, without which cci rejects --org (todo 244).
+        triggers=["tasks/", "cumulusci.yml", "tests/test_cci_task_org_option.py"],
+        deps=["cumulusci"], gating=True,
+    ),
+    dict(
+        name="sfdmu_id_lookup_wiring",
+        cmd=["python", "tests/test_sfdmu_id_lookup_wiring.py"],
+        # LoadSFDMUData's parent-Id lookup step (todo 298): the sf CLI org is never the access
+        # token, and Ids resolve in a temp copy that leaves the tracked plan untouched. Also
+        # DeleteSFDMUData's named-sobjects teardown of the all-Upsert qb-pricing plan.
+        triggers=["tasks/rlm_sfdmu.py", "scripts/sfdmu_id_lookups.py", "scripts/sfdmu_export.py",
+                  "datasets/sfdmu/qb/en-US/qb-rating-entitlements/",
+                  "datasets/sfdmu/qb/en-US/qb-rating/",
+                  "datasets/sfdmu/qb/en-US/qb-pricing/",
+                  # The export.json byte-restore cases load q3-rates in place (todo 319).
+                  "datasets/sfdmu/q3/en-US/q3-rates/",
+                  "tests/test_sfdmu_id_lookup_wiring.py"],
         deps=["cumulusci"], gating=True,
     ),
     dict(
@@ -417,6 +485,9 @@ CHECKS = [
                   "force-app/", "unpackaged/",
                   ".agents/", ".claude/", ".cursor/", "docs/references/",
                   "AGENTS.md", "CLAUDE.md", "README.md",
+                  # tests/test_toolchain_audit.py runs the guide's ~/.zshenv NVM block against the
+                  # audit's nested-shell check, so an edit to the template must run it.
+                  "docs/guides/dev-environment-setup.md",
                   # Loaded by path (spec loader) from tests/test_robot_salesforce_api_auth.py,
                   # so the import-coverage rule cannot see it; named here so an edit to the
                   # library runs its auth suite. tests/test_validate_setup_chrome.py loads the
@@ -430,7 +501,7 @@ CHECKS = [
     dict(
         name="requests_offline_suites",
         cmd=None,  # expanded at runtime — see REQUESTS_SUITES
-        # The modules these two suites exercise, plus the non-code inputs they read and assert
+        # The modules these suites exercise, plus the non-code inputs they read and assert
         # against — the shipped overlay examples and the export fixture. The paths are the ones the
         # trigger-coverage rule named when this check was first added with guessed ones: a suite that
         # reads a file no trigger selects is a suite that can be invalidated without being run.
@@ -442,11 +513,14 @@ CHECKS = [
         # found this to be the only instance.
         triggers=["tasks/rlm_expression_set_connect.py", "tasks/rlm_cml.py",
                   "tasks/expression_set_schema.py", "tasks/rlm_community.py",
-                  "scripts/expression_sets/", "scripts/cml/",
+                  "scripts/expression_sets/", "scripts/recycle_bin/", "tasks/rlm_empty_recycle_bin.py",
+                  "scripts/sf_token.py",
+                  "tests/test_empty_recycle_bin.py",
                   "tests/test_expression_set_schema.py",
                   "tests/test_rlm_cml_import_failure.py",
                   "tests/test_rlm_cml_validate.py",
                   "tests/test_rlm_community.py",
+                  "tasks/rlm_mcp.py", "tests/test_rlm_mcp_configure.py",
                   "tests/data/expression_set/",
                   "datasets/expression_set_overlays/",
                   "docs/references/expression-set-overlay-examples/"],
@@ -461,13 +535,16 @@ CHECKS = [
              "tests/test_prepare_constraints_validation.py",
              "tests/test_doc_snapshot_presets.py",
              "tests/test_workflow_policy.py",
-             "tests/test_docker_publish.py"],  # run in sequence
+             "tests/test_docker_publish.py",
+             "tests/test_deploy_with_fragments.py"],  # run in sequence
         # qb-dro because test_fulfillment_scope_tolerance.py reads its Product2.csv and
         # FulfillmentStepDefinition.csv and asserts the banner's count matches them — adding a
         # usage product to that dataset invalidates the assertion, so it has to select this.
         triggers=["tasks/", "cumulusci.yml", "scripts/ai/skill_manifest.py",
                   ".claude/skill-manifest.yml",
                   "datasets/sfdmu/qb/en-US/qb-dro/",
+                  # test_prepare_constraints_validation.py asserts the shipped model set under here.
+                  "datasets/constraints/qb/",
                   "tests/test_decision_table_tasks.py",
                   "tests/test_deactivate_changed_decision_tables.py",
                   "unpackaged/pre/5_decisiontables/",
@@ -482,7 +559,13 @@ CHECKS = [
                   # interpolation in run:) parses the YAML, so any workflow or local-action change selects it.
                   ".github/workflows/", ".github/actions/", "tests/test_workflow_policy.py",
                   # docker-publish's :latest rule runs the workflow's own coordinates script.
-                  "tests/test_docker_publish.py"],
+                  "tests/test_docker_publish.py",
+                  # quote_est_tax: the partner permission set and the setting must deploy with
+                  # the flag off and on, and no other settings file (unpackaged/pre, a scratch
+                  # def) may set enableQuoteEstimatedTaxCPQ behind the flag's back.
+                  "tests/test_deploy_with_fragments.py", "unpackaged/pre/", "unpackaged/post_prm/",
+                  "unpackaged/post_quote_est_tax_settings/", "orgs/", "force-app/main/default/settings/",
+                  "templates/"],
         deps=["PyYAML"], gating=True,
     ),
     dict(
@@ -585,6 +668,19 @@ CHECKS = [
                   "tests/test_ux_tool.py", "pyproject.toml", "unpackaged/post_ux/"],
         deps=["pytest", "PyYAML"], gating=True,
     ),
+    dict(
+        name="lwc_jest",
+        cmd=["python", "scripts/ai/run_lwc_jest.py"],
+        # Any path with an `lwc` directory segment, at any depth: components live under every
+        # `unpackaged/<bundle>/lwc/`, and matching the segment (not a typed prefix list, not the
+        # directories on disk) also selects a nested layout and a deleted bundle. Plus everything
+        # that decides how Jest runs, resolves `c/` imports (sfdx-project.json's package
+        # directories) or installs.
+        segments=["lwc"],
+        triggers=["jest.config.js", "package.json", "package-lock.json", "sfdx-project.json",
+                  ".nvmrc", "scripts/ai/run_lwc_jest.py"],
+        deps=[], node_deps=["node_modules/.bin/sfdx-lwc-jest"], gating=True,
+    ),
 ]
 
 # Suites that need nothing but the standard library, run as one check. Enumerated rather
@@ -594,7 +690,11 @@ CHECKS = [
 STDLIB_SUITES = [
     "tests/test_agent_launch_checks.py",
     "tests/test_agents_common.py",
+    "tests/test_billing_flow_copies.py",
     "tests/test_build_billing_ui_module.py",
+    "tests/test_build_quote_ramp_args.py",
+    "tests/test_check_node_ca.py",
+    "tests/test_check_permission_set_dependencies.py",
     "tests/test_check_release_refs.py",
     "tests/test_claude_hooks.py",
     "tests/test_context_apply.py",
@@ -607,26 +707,38 @@ STDLIB_SUITES = [
     "tests/test_df_workshop_replay.py",
     "tests/test_expression_sets_toolkit.py",
     "tests/test_fix_scratch_identity.py",
+    "tests/test_manage_expression_sets_constraint_activation.py",
+    "tests/test_mcp_scripts_security.py",
     "tests/test_post_process_extraction.py",
+    "tests/test_procedure_plan_overlay_activation.py",
+    "tests/test_project_memory_schema.py",
     "tests/test_qb_multicurrency_data.py",
     "tests/test_renewal_bucket_planner.py",
     "tests/test_rlm_apex_file.py",
+    "tests/test_rlm_enable_change_data_capture.py",
     "tests/test_robot_salesforce_api_auth.py",
+    "tests/test_search_index_readiness.py",
+    "tests/test_sfdmu_id_lookups.py",
     "tests/test_sf_token.py",
     "tests/test_snapshot_dev_guide.py",
     "tests/test_snapshot_help.py",
+    "tests/test_toolchain_audit.py",
     "tests/test_validate_keys_targets.py",
     "tests/test_validate_setup_chrome.py",
+    "tests/test_validate_setup_sf.py",
+    "tests/test_verify_backdated_billing.py",
 ]
 
 # Offline like the list above, but they reach a `tasks/` module that imports `requests`, so the
 # dependency is declared and installed rather than inherited by luck from another check's transitive
 # tree. Kept as a separate list so `STDLIB_SUITES` means what it says.
 REQUESTS_SUITES = [
+    "tests/test_empty_recycle_bin.py",
     "tests/test_expression_set_schema.py",
     "tests/test_rlm_cml_import_failure.py",
     "tests/test_rlm_cml_validate.py",
     "tests/test_rlm_community.py",
+    "tests/test_rlm_mcp_configure.py",
 ]
 
 # Which check runs which spliced list — named once, read by both `resolve()` (to build the argv) and
@@ -793,10 +905,33 @@ def selects(check, files):
         return True
     if any(f.startswith(t) for t in check["triggers"] for f in files):
         return True
-    return any(f.endswith(s) for s in check.get("suffixes", ()) for f in files)
+    if any(f.endswith(s) for s in check.get("suffixes", ()) for f in files):
+        return True
+    # `segments` is for a check keyed on a directory name wherever it sits (`lwc`): a directory
+    # segment, so a file merely named `lwc` does not count.
+    return any(seg in f.split("/")[:-1] for seg in check.get("segments", ()) for f in files)
 
 
 def missing_deps(check):
+    return missing_python_deps(check) + missing_node_deps(check)
+
+
+def missing_node_deps(check):
+    """Node checks: the runtime and the installed packages, both fatal when absent, exactly as
+    a missing pip package is. CI installs them only when --needs-node says a selected check
+    wants them, so a wrong answer there shows up here as MISSING-DEP, never as a skip.
+    Not something the gate interpreter can supply, so they don't trigger the re-run."""
+    missing = []
+    if check.get("node_deps"):
+        if shutil.which("node") is None:
+            missing.append("node (see .nvmrc)")
+        missing += [f"{path} (run `npm ci`)" for path in check["node_deps"]
+                    if not os.path.exists(os.path.join(REPO_ROOT, path))]
+    return missing
+
+
+def missing_python_deps(check):
+    """Pip packages and the interpreter floor."""
     missing = [pkg for pkg in check["deps"]
                if not have_module(DEPS.get(pkg, pkg))]
     need = check.get("min_python")
@@ -926,7 +1061,39 @@ def run_sequence(cmds):
     return worst, "\n".join(chunks), total
 
 
-def main():
+def reexec_under_gate_interpreter(selected, argv):
+    """Replace this process with the gate interpreter when it can run what this one can't.
+
+    Returns (having printed why) when nothing is missing, or when the gate interpreter is
+    unusable too, so the caller reports MISSING-DEP as before. Called only from the script
+    entry point: the suite drives main() in-process with `missing_deps` patched, and an
+    exec there would replace the test runner.
+    """
+    # Node items are subtracted, not the rest recomputed: the gate interpreter cannot supply Node,
+    # and reading through missing_deps keeps this the one function the suite patches.
+    if not any(set(missing_deps(c)) - set(missing_node_deps(c)) for c in selected):
+        return
+    try:
+        import gate_python  # stdlib-only sibling; scripts/ai is sys.path[0] when run by path
+        python, problems = gate_python.problems(Path(REPO_ROOT))
+    except Exception as exc:  # a resolver bug must not take the gate down with it
+        print(f"note: could not resolve the gate interpreter ({exc}); running here", flush=True)
+        return
+    if problems:
+        print("note: this interpreter lacks a selected check's dependency, and the gate "
+              f"interpreter can't stand in: {'; '.join(problems)}. Set it up per "
+              "docs/guides/local-installation.md (Step 6).", flush=True)
+        return
+    if os.path.abspath(str(python)) == os.path.abspath(sys.executable):
+        return
+    print(f"note: re-running under the gate interpreter {python}", flush=True)
+    try:
+        os.execv(str(python), [str(python), os.path.abspath(__file__), *argv, "--no-reexec"])
+    except OSError as exc:  # gone or not executable since the probe; never a traceback's exit 1
+        print(f"note: could not start {python} ({exc}); running here", flush=True)
+
+
+def main(reexec=False):
     ap = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--base", help="git ref to diff against (e.g. origin/main)")
@@ -935,12 +1102,17 @@ def main():
     ap.add_argument("--list", action="store_true", help="print the matrix and exit")
     ap.add_argument("--requirements", action="store_true",
                     help="print pip deps the selection needs, one per line, then exit")
+    ap.add_argument("--needs-node", action="store_true",
+                    help="print `true` when a selected check needs Node packages, else `false`, then exit")
+    ap.add_argument("--no-reexec", action="store_true",
+                    help="never re-run under the gate interpreter (the re-run passes this)")
     args = ap.parse_args()
 
     if args.list:
         print(f"{'check':26} {'gating':7} {'deps':34} triggers")
         for c in CHECKS:
-            selectors = list(c["triggers"]) + [f"*{s}" for s in c.get("suffixes", ())]
+            selectors = (list(c["triggers"]) + [f"*{s}" for s in c.get("suffixes", ())]
+                         + ["/".join(("*", s, "*")) for s in c.get("segments", ())])
             print(f"{c['name']:26} {str(c['gating']):7} "
                   f"{','.join(c['deps']) or '-':34} {', '.join(selectors)}")
         print("\nexcluded from the gate, deliberately:")
@@ -979,6 +1151,13 @@ def main():
         for line in emitted:
             print(line)
         return 0
+
+    if args.needs_node:
+        print("true" if any(c.get("node_deps") for c in selected) else "false")
+        return 0
+
+    if reexec and not args.no_reexec:
+        reexec_under_gate_interpreter(selected, sys.argv[1:])
 
     orphans = unlisted_suites()
     if files is not None:
@@ -1107,4 +1286,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(reexec=True))

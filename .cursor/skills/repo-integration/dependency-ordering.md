@@ -11,7 +11,7 @@ control order):
 |-----|---------|-----------|
 | `1_objects/` | Custom fields | Fields must exist before PSGs/DTs that reference them |
 | `2_settings/` | Org settings | Features must be enabled before metadata that uses them |
-| `3_permissionsetgroups/` | PSGs | PSG metadata deploys here; references PSLs from `force-app/` |
+| `3_permissionsetgroups/` | PSGs, plus repo-owned permission sets they include | PSG metadata deploys here; references PSLs from `force-app/`. A permission set a PSG includes (e.g. `RLM_BillingAccountFieldAccess`) lives in this folder so it deploys in the same bundle |
 | `5_decisiontables/` | Decision table definitions | Must exist before expression sets or flows reference them |
 
 ### Profile strip-and-build
@@ -48,11 +48,13 @@ paths are forceignored.
 |-----------|------|------------|
 | 1 | qb-pcm (products) | None |
 | 2 | qb-pricing | qb-pcm |
+| 2b | qb-price-revision | None (no lookups); loads right after qb-pricing (`prepare_pricing_data` step 3); refresh `Index_Rate_Decision_Table` after |
 | 3 | qb-dro | qb-pcm |
 | 4 | qb-tax | qb-pcm |
 | 5 | qb-billing | qb-pcm (LegalEntity shared with qb-tax) |
 | 6 | qb-clm | qb-pcm |
 | 7 | qb-rating | qb-pcm + qb-billing (UsageResourceBillingPolicy) |
+| 7b | qb-rating-entitlements | qb-rating (PURs must exist; their Ids are resolved on the target org at load time) |
 | 8 | qb-rates | qb-pcm + qb-rating (PURs must exist) + qb-pricing (PriceBook2) |
 | 9 | qb-approvals | post_approvals metadata + email templates |
 | 10 | qb-guidedselling-products | qb-pcm + `deploy_post_guidedselling` Product2 fields |
@@ -101,37 +103,40 @@ Reverse dependency order (children before parents):
 
 | Step | Sub-flow | What happens |
 |------|---------|--------------|
-| 1 | prepare_core | PSLs, PSGs, context defs, deploy_pre |
+| 1 | prepare_core | PSLs, PSGs, context defs, deploy_pre; then estimated tax off (unless `quote_est_tax` and `tax`; prepare_tax turns it on after the tax engine, before prepare_prm grants its fields) |
 | 2 | prepare_decision_tables | DT lifecycle |
 | 3 | prepare_expression_sets | ES lifecycle |
 | 4 | prepare_payments | Payments webhook + metadata |
 | 5 | deploy_full | `force-app/` bundle |
 | 6 | prepare_price_adjustment_schedules | PAS metadata |
 | 7 | prepare_quantumbit | QB metadata |
-| 8 | prepare_product_data | PCM, Q3, product images |
+| 8 | prepare_product_data | PCM, Q3, product images; sets the org-wide default configurator flow |
 | 9 | prepare_pricing_data | Pricing |
 | 10 | prepare_docgen | DocGen |
 | 11 | prepare_dro | DRO + fulfillment scope |
-| 12 | prepare_tax | Tax |
+| 12 | prepare_tax | Tax engine, data, activation; then estimated tax on (when `quote_est_tax` and `tax`) |
 | 13 | prepare_billing | Billing |
 | 14 | prepare_collections | Collections & Recovery: matrix + post_collections + case flow (when `collections`) |
 | 15 | prepare_analytics | CRM Analytics replication |
 | 16 | prepare_clm | CLM |
 | 17 | prepare_rating | Rating + rates + activation |
 | 18 | activate_and_deploy_expression_sets | ES activation |
-| 19 | prepare_tso | TSO-specific PSLs, PSGs, deploy |
-| 20 | prepare_procedureplans | Procedure plan definitions |
-| 21 | prepare_prm | PRM community + data |
-| 22 | prepare_agents | Agent classes + deploy |
-| 23 | prepare_constraints | Constraints + CML |
-| 24 | prepare_guidedselling | Guided selling PSets + metadata + Product2 field values (qb-guidedselling-products) |
-| 25 | prepare_revenue_settings | Revenue Settings (Robot) |
-| 26 | prepare_pricing_discovery | Pricing discovery refresh |
-| 27 | prepare_large_stx | Large-deal sales-transaction metadata (when `large_stx`) |
-| 28 | prepare_personas | Persona profiles + PSGs + Sales Rep scratch user (when `personas`) |
-| 29 | prepare_ux | UX assembly + deploy (when `ux`) |
-| 30 | prepare_inapp | In-App Learning framework + PSet + content dataset (when `inapp`) |
-| 31 | prepare_scratch | Scratch-only data (Account, Contact, BillingAccount) |
-| 32 | refresh_all_decision_tables | DT cache refresh |
-| 33 | rebuild_search_index | PCM catalog search index build (async) |
-| 34 | stamp_git_commit | Always last |
+| 19 | prepare_approvals_pricing | Approval context + approval flags overlays (when `quantumbit` and `approvals`) |
+| 20 | prepare_tso | TSO-specific PSLs, PSGs, deploy |
+| 21 | prepare_procedureplans | Procedure plan definitions |
+| 22 | prepare_prm | PRM community + data |
+| 23 | prepare_agents | Agent classes + deploy |
+| 24 | prepare_constraints | Constraints + CML |
+| 25 | prepare_guidedselling | Guided selling PSets + metadata + Product2 field values (qb-guidedselling-products) |
+| 26 | prepare_revenue_settings | Revenue Settings (Robot) |
+| 27 | prepare_pricing_discovery | Pricing discovery refresh |
+| 28 | prepare_large_stx | Large Transaction setting first (`post_large_stx_settings`), then large-deal sales-transaction metadata (when `large_stx`) |
+| 29 | prepare_personas | Persona profiles + PSGs + Sales Rep scratch user (when `personas`) |
+| 30 | prepare_ux | UX assembly + deploy (when `ux`) |
+| 31 | prepare_inapp | In-App Learning framework + PSet + content dataset (when `inapp`) |
+| 32 | prepare_scratch | Scratch-only data (Account, Contact, BillingAccount) |
+| 33 | refresh_all_decision_tables | DT cache refresh |
+| 34 | rebuild_search_index | PCM catalog search index build (async) |
+| 35 | empty_recycle_bin | Recycle Bin purge (scratch orgs only) |
+| 36 | prepare_mcp | MCP surface: ECA + server config (when `mcp`); clone invocable + custom server (when `mcp_custom_server`) |
+| 37 | stamp_git_commit | Always last |

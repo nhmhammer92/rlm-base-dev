@@ -97,6 +97,23 @@ def issues(passes, root_files=None, per_pass_files=None, severity=None, use_sepa
                 if severity is None or i.severity == severity]
 
 
+# The allowlist mechanism's own fixture. The shipped allowlist has been empty since pack 194
+# removed the last known duplicate, so the scoping rules are pinned against this entry instead.
+_FIXTURE_NONUNIQUE_ALLOWLIST = {
+    "q3/en-US/q3-rating/RatingFrequencyPolicy.csv": ("RatingPeriod", frozenset({("Monthly", 2)})),
+}
+
+
+def allowlisted_issues(*args, **kwargs):
+    """`deferral_issues` with `_FIXTURE_NONUNIQUE_ALLOWLIST` in place of the shipped allowlist."""
+    saved = V.SFDMUValidator._KNOWN_NONUNIQUE_SINGLE_FIELD_KEY_PATHS
+    V.SFDMUValidator._KNOWN_NONUNIQUE_SINGLE_FIELD_KEY_PATHS = _FIXTURE_NONUNIQUE_ALLOWLIST
+    try:
+        return deferral_issues(*args, **kwargs)
+    finally:
+        V.SFDMUValidator._KNOWN_NONUNIQUE_SINGLE_FIELD_KEY_PATHS = saved
+
+
 def deferral_issues(rel_plan_dir, passes, root_files, severity=None):
     """Run the validator END-TO-END with the plan materialized at its real
     `datasets/sfdmu/<rel_plan_dir>` location, so `_is_deferred_empty_csv_plan` (which
@@ -1426,11 +1443,20 @@ SINGLE_FIELD_KEY_UNIQUENESS = [
                                 {"query": "SELECT Id FROM Widget__c", "operation": "Upsert", "externalId": "1"}]],
                               {"Widget__c.csv": "1\ndup\ndup\n"}, severity=V.Severity.HIGH)
             if "duplicate value" in i]),
-    # The pre-existing non-unique shipped files (packs 193/194) are allowlisted by EXACT path so the
-    # guard lands green. Materialized at its real location via `deferral_issues`, RatingFrequencyPolicy
-    # (frozen signature {("Monthly", 2)}) is suppressed only when its collision matches that signature...
+    # Pack 194 removed the last shipped duplicate, so the shipped allowlist is empty and the old
+    # RatingFrequencyPolicy collision now fires like any other.
+    ("the shipped allowlist exempts nothing: the old RatingFrequencyPolicy duplicate fires HIGH",
+     True, [i for i in deferral_issues(
+         "q3/en-US/q3-rating",
+         [[{"query": "SELECT Id, RatingPeriod FROM RatingFrequencyPolicy", "operation": "Upsert",
+            "externalId": "RatingPeriod"}]],
+         {"RatingFrequencyPolicy.csv": "Id,RatingPeriod\n1,Monthly\n2,Monthly\n"},
+         severity=V.Severity.HIGH)
+         if "duplicate value" in i]),
+    # The allowlist mechanism, against `_FIXTURE_NONUNIQUE_ALLOWLIST`: an entry is matched by EXACT
+    # path, and suppresses a collision only when it matches the frozen signature {("Monthly", 2)}...
     ("an allowlisted path whose duplicate signature matches the frozen one is suppressed",
-     False, [i for i in deferral_issues(
+     False, [i for i in allowlisted_issues(
          "q3/en-US/q3-rating",
          [[{"query": "SELECT Id, RatingPeriod FROM RatingFrequencyPolicy", "operation": "Upsert",
             "externalId": "RatingPeriod"}]],
@@ -1440,7 +1466,7 @@ SINGLE_FIELD_KEY_UNIQUENESS = [
     # the frozen 2), the observed signature diverges and the guard fires — a regression cannot hide
     # behind the allowlist. (Copilot's exact scenario: "gains ... another Monthly row".)
     ("an allowlisted path that gains a NEW duplicate beyond the frozen signature fires HIGH",
-     True, [i for i in deferral_issues(
+     True, [i for i in allowlisted_issues(
          "q3/en-US/q3-rating",
          [[{"query": "SELECT Id, RatingPeriod FROM RatingFrequencyPolicy", "operation": "Upsert",
             "externalId": "RatingPeriod"}]],
@@ -1451,31 +1477,34 @@ SINGLE_FIELD_KEY_UNIQUENESS = [
     # number of extra duplicate rows (here "Weekly" ×2 instead of "Monthly" ×2 — total extra still 1)
     # is a DIFFERENT collision, so its signature {("Weekly", 2)} != {("Monthly", 2)} and it fires.
     ("an allowlisted path whose duplicate value is swapped (same total) fires HIGH",
-     True, [i for i in deferral_issues(
+     True, [i for i in allowlisted_issues(
          "q3/en-US/q3-rating",
          [[{"query": "SELECT Id, RatingPeriod FROM RatingFrequencyPolicy", "operation": "Upsert",
             "externalId": "RatingPeriod"}]],
          {"RatingFrequencyPolicy.csv": "Id,RatingPeriod\n1,Weekly\n2,Weekly\n"},
          severity=V.Severity.HIGH)
          if "duplicate value" in i]),
-    # ...but the SAME object with the SAME duplicate in a DIFFERENT (non-allowlisted) plan still
-    # fires — the allowlist is keyed on exact path, not object name, so a new plan is not exempted.
-    ("the same object+duplicate in a non-allowlisted plan still fires HIGH",
-     True, [i for i in deferral_issues(
-         "qb/en-US/qb-newplan",
-         [[{"query": "SELECT Id, Name FROM ObjectStateValue", "operation": "Upsert",
-            "externalId": "Name"}]],
-         {"ObjectStateValue.csv": "Id,Name\n1,dup\n2,dup\n"}, severity=V.Severity.HIGH)
+    # ...but the fixture's exact object, key and duplicate in a DIFFERENT plan still fires: the
+    # allowlist is keyed on exact path, not object name, so a new plan is not exempted.
+    ("the allowlisted object+key+duplicate in a non-allowlisted plan still fires HIGH",
+     True, [i for i in allowlisted_issues(
+         "q3/en-US/q3-rating-copy",
+         [[{"query": "SELECT Id, RatingPeriod FROM RatingFrequencyPolicy", "operation": "Upsert",
+            "externalId": "RatingPeriod"}]],
+         {"RatingFrequencyPolicy.csv": "Id,RatingPeriod\n1,Monthly\n2,Monthly\n"},
+         severity=V.Severity.HIGH)
          if "duplicate value" in i]),
-    # The allowlist is scoped to the SPECIFIC known-bad key, not the file wholesale: the exempt
-    # qb-clm ObjectStateValue path is allowlisted for key "Name" only. Re-keyed to a DIFFERENT single
-    # field ("Code") with a duplicate, the collision is unknown and still fires HIGH.
+    # The allowlist is scoped to the SPECIFIC known-bad key, not the file wholesale: the fixture path
+    # is allowlisted for key "RatingPeriod" only. Re-keyed to a DIFFERENT single field
+    # ("RatingDelayDuration") with a duplicate, the collision is unknown and still fires HIGH.
     ("an allowlisted path re-keyed to a DIFFERENT single field with a duplicate still fires HIGH",
-     True, [i for i in deferral_issues(
-         "qb/en-US/qb-clm",
-         [[{"query": "SELECT Id, Code FROM ObjectStateValue", "operation": "Upsert",
-            "externalId": "Code"}]],
-         {"ObjectStateValue.csv": "Id,Code\n1,dup\n2,dup\n"}, severity=V.Severity.HIGH)
+     True, [i for i in allowlisted_issues(
+         "q3/en-US/q3-rating",
+         [[{"query": "SELECT Id, RatingDelayDuration FROM RatingFrequencyPolicy", "operation": "Upsert",
+            "externalId": "RatingDelayDuration"}]],
+         # The fixture's own duplicate value, so the signature matches and only the key differs.
+         {"RatingFrequencyPolicy.csv": "Id,RatingDelayDuration\n1,Monthly\n2,Monthly\n"},
+         severity=V.Severity.HIGH)
          if "duplicate value" in i]),
 ]
 
@@ -1950,6 +1979,22 @@ TRAILING_SEMICOLON_EMPTY_SEGMENT = [
 # still holds for a doubled ';': the fixer and validator agree on the same (dropped) column name,
 # so a real run's second pass is a no-op, the same guarantee UNSTRIPPED_EXTERNAL_ID already pins
 # for a stray space.
+
+# The fixer writes a `$$` value the way SFDMU 5.8.0 builds the target key
+# (`MigrationJobTask._getRecordFieldValue` drops every empty part). A kept empty part (`a;;c` for a
+# blank middle field, `a;b;` for a blank last one) never matches, and an Upsert inserts a duplicate
+# (todo 298: qb-rates RateAdjustmentByTier, qb-pcm ProductRelatedComponent). Expect-finding False:
+# each case's third element lists the wrong values, so an empty list is the pass.
+_CKV = V.SFDMUValidator(base_dir=".", verbose=False)._build_composite_key_value
+COMPOSITE_VALUE_DROPS_EMPTY_PARTS = [
+    ("the fixer drops a blank middle part from a $$ value, as SFDMU does on the target",
+     False, [v for v in [_CKV({"A": "a", "B": "", "C": "c"}, ["A", "B", "C"])] if v != "a;c"]),
+    ("the fixer drops a blank last part from a $$ value",
+     False, [v for v in [_CKV({"A": "a", "B": "b", "C": ""}, ["A", "B", "C"])] if v != "a;b"]),
+    ("a field absent from the row counts as blank, not as the text 'None'",
+     False, [v for v in [_CKV({"A": "a", "B": None}, ["A", "B"])] if v != "a"]),
+]
+
 TRAILING_SEMICOLON_COMPOSITE_KEY = [
     ("a doubled ';' in externalId does not cause a false missing-composite-key-column finding "
      "when the CSV header already has the dropped-empty-segment column name",
@@ -2249,6 +2294,8 @@ def main() -> int:
                  ("a doubled ';' in externalId does not break composite-key-column convergence "
                   "between the fixer and the validator",
                   TRAILING_SEMICOLON_COMPOSITE_KEY),
+                 ("the fixer's $$ value drops empty parts, as SFDMU does on the target",
+                  COMPOSITE_VALUE_DROPS_EMPTY_PARTS),
                  ("the documented live baseline still holds", BASELINE)]
     # +1 for the self-count check appended below, which needs the total it asserts against.
     total = sum(len(c) for _, c in all_cases) + 1

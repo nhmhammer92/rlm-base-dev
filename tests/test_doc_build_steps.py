@@ -32,7 +32,7 @@ Two directions are checked, because drift and omission are different failures:
    satisfy the claim this one makes.
 
    Grants are identified by the task's **class**, not its name. Name-keying on
-   `assign_permission_set*` missed `assign_personas_sales_rep_psg` (28.5), which
+   `assign_permission_set*` missed `assign_personas_sales_rep_psg` (29.5), which
    grants a PSG through the same class as the documented 1.11 and 1.13 -- exactly
    the omission this direction exists to catch -- and it would also miss any task
    that gets renamed without changing what it grants.
@@ -81,6 +81,7 @@ Run:  <cci-venv-python> tests/test_doc_build_steps.py
 
 import os
 import re
+import subprocess
 import sys
 import tempfile
 
@@ -95,7 +96,7 @@ COMPLETENESS_HEADING = "## Assignment Order in `prepare_rlm_org`"
 
 # Steps that grant something, keyed by the task's implementing class rather than
 # its name. Name-keying missed a real grant: `assign_personas_sales_rep_psg` (step
-# 28.5) assigns the `RLM_Sales_Representative` PSG through the same
+# 29.5) assigns the `RLM_Sales_Representative` PSG through the same
 # `AssignPermissionSetGroupsTolerant` class as the documented 1.11 and 1.13, but
 # does not start with `assign_permission_set`, so it was absent from a table
 # claiming to list them all and the check said nothing. A task can also be renamed
@@ -125,7 +126,7 @@ _FENCE = re.compile(r"^\s*(?:```|~~~)")
 #
 #   `prepare_agents` step 10      -> step 10 *inside* prepare_agents
 #   step 2 of `prepare_ux`        -> same, reversed
-#   `prepare_large_stx` at step 27 -> prepare_large_stx *is* step 27 of the root
+#   `prepare_large_stx` at step 28 -> prepare_large_stx *is* step 28 of the root
 #
 # The flow name must be backticked and adjacent, which is what keeps ordinary
 # "step 3" prose from being read as a citation.
@@ -182,12 +183,19 @@ def resolve_flow():
             "python, not a bare python3"
         ) from exc
 
+    # CCI locates the project by looking for a `.git` *directory*; in a git worktree `.git` is a
+    # file, so it walks up to the main checkout (or finds nothing). Its own override env vars point
+    # it at this checkout instead; both are required, and a value the caller already set wins.
+    if os.path.isfile(os.path.join(REPO, ".git")):
+        os.environ.setdefault("CUMULUSCI_AUTO_DETECT", "1")
+        os.environ.setdefault("CUMULUSCI_REPO_ROOT", REPO)
     runtime = CliRuntime(load_keychain=False)
     if runtime.project_config is None:
         raise RuntimeError(
             "CumulusCI imported but resolved no project, so no flow can be read. "
             "Run from the repo root — CumulusCI finds the repo by looking for a "
-            ".git directory, and in a git worktree .git is a file."
+            ".git directory (a worktree's .git is a file; resolve_flow sets "
+            "CUMULUSCI_AUTO_DETECT/CUMULUSCI_REPO_ROOT for that case)."
         )
     coordinator = runtime.get_flow(ROOT_FLOW)
     return runtime, {
@@ -327,9 +335,39 @@ def audit_named_steps(inside, root_at, inside_task, runtime, declared, base=None
     return problems, seen, unknown
 
 
+def _tracked_markdown():
+    """Markdown files git tracks or could add (untracked, not ignored), or None when git cannot say.
+
+    The repo's own docs are what CI audits, so the default scan asks git rather than the disk.
+    A disk walk also reads `.claude/worktrees/*` checkouts (each a full copy of the docs, at
+    another commit) and stray untracked directories such as `tmp-metadata/`, and reported their
+    stale citations as this branch's. Untracked files are included because the gate selects this
+    check on a new, unstaged doc; git does not descend into a nested checkout, so worktrees stay out.
+    """
+    try:
+        proc = subprocess.run(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard",
+                               "--", "*.md"],
+                              cwd=REPO, capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    paths = (os.path.join(REPO, p) for p in sorted(proc.stdout.split("\0")) if p)
+    return [p for p in paths if os.path.isfile(p)]
+
+
 def _markdown_files(base=None):
-    for root, dirs, files in os.walk(base or REPO):
-        dirs[:] = [d for d in dirs if d not in _SKIP_PARTS]
+    if base is None:
+        tracked = _tracked_markdown()
+        if tracked is not None:
+            yield from tracked
+            return
+    top = base or REPO
+    for root, dirs, files in os.walk(top):
+        # A subdirectory holding its own `.git` (file or directory) is another checkout, such
+        # as a worktree, not part of this tree.
+        dirs[:] = [d for d in dirs if d not in _SKIP_PARTS
+                   and not os.path.exists(os.path.join(root, d, ".git"))]
         for name in sorted(files):
             if name.endswith(".md"):
                 yield os.path.join(root, name)

@@ -16,7 +16,9 @@
 #      resolve_manifest() function — load and resolve are separate steps so a
 #      single load can back many lookups.)
 #   2. Local clone paths come from env vars (FOUNDATIONS_REPO_ROOT, PMOS_REPO_ROOT)
-#      OR sibling-directory fallback (../pmos-revenue-cloud, ../rlm-base-dev)
+#      OR sibling-directory fallback (../pmos-revenue-cloud, ../rlm-base-dev).
+#      The repo containing this file answers for its own section first, ahead
+#      of every hint, so a worktree or renamed clone audits itself.
 #   3. Each grounding artifact has a resolved local filesystem path
 #   4. CLI: `python scripts/ai/skill_manifest.py --check | --list-skills <repo> |
 #      --resolve <repo>/<kind>/<key>` exposes the same surface for diagnostics
@@ -39,7 +41,7 @@ generated_at: "2026-05-23T00:00:00Z"
 # never been committed on any branch. `skill_manifest.py --check` did not catch any of
 # that at the time — it resolved repo roots only. It now audits every declared skill
 # and every path-shaped value, so re-stamping this date means running it.
-last_verified: "2026-07-26"
+last_verified: "2026-10-22"
 salesforce_release_active: "264"
 salesforce_release_prior_ga: "262"
 api_version_active: "v68.0"
@@ -61,10 +63,25 @@ foundations:
     - "$RC_WORKSPACE/foundations"
     - "${HOME}/Documents/GitHub/bgaldino/_bgaldino/rlm-base-dev"
     - "../rlm-base-dev"
+  # Paths that identify a candidate directory as THIS repo when it does not yet
+  # ship the manifest itself. Any one existing is enough.
+  clone_markers:
+    - ".cursor/skills"
 
   # Skills that Foundations holds canonically.
   # PMOS skills can read these via cross-repo resolution.
   skills:
+    - id: dro-plans
+      path: .cursor/skills/dro-plans/SKILL.md
+      purpose: "Author, load CSV/SFDMU, and maintain DRO order fulfillment configuration and handle affected in-flight plans"
+      consumed_by_pmos: []
+      sub_skills:
+        - .cursor/skills/dro-plans/objects-and-relationships.md
+        - .cursor/skills/dro-plans/authoring-and-deployment.md
+        - .cursor/skills/dro-plans/csv-and-sfdmu.md
+        - .cursor/skills/dro-plans/updates-and-runtime.md
+        - .cursor/skills/dro-plans/examples-and-grounding.md
+
     - id: revenue-cloud-data-model
       path: .cursor/skills/revenue-cloud-data-model/SKILL.md
       purpose: "Revenue Cloud object/field schema reference; backed by erd-data.json"
@@ -224,7 +241,7 @@ foundations:
       provenance: hand-authored from tasks/rlm_cml.py + live verification on a scratch org + 262 Help/dev-guide CML articles
       caveats:
         - "Endpoints target 264 / v68.0; behavior was live-verified on 262 / v67.0 and is NOT yet re-verified on 264"
-        - "A standalone import_cml uploads the blob but never cycles the version, so the runtime keeps the old model; prepare_constraints covers this at steps 11-12 but a one-off import does not"
+        - "A standalone import_cml uploads the blob but never cycles the version, so the runtime keeps the old model; prepare_constraints covers this at steps 9-10 but a one-off import does not"
 
     - id: pricing-wiring
       path: .cursor/skills/pricing-wiring/SKILL.md
@@ -244,6 +261,22 @@ foundations:
         - scripts/build_harness
       caveats:
         - "Local-only tooling; run artifacts under .harness/ are not tracked"
+
+    - id: toolchain
+      path: .cursor/skills/toolchain/SKILL.md
+      purpose: "Local developer toolchain: read-only workstation audit, setup and update via the guides and update-toolchain.sh, managed-workstation handling (tool-managed shell blocks, macOS login PATH order, corporate CA files, Chrome for Testing) and cross-workstation verification"
+      consumed_by_pmos: []
+      provenance: hand-authored from the 2026-10 toolchain hardening (PRs 539, 547-551)
+      sub_skills:
+        - .cursor/skills/toolchain/workstation-audit.md
+        - .cursor/skills/toolchain/managed-workstations.md
+        - .cursor/skills/toolchain/verification-handoff.md
+      tooling:
+        - scripts/bash/update-toolchain.sh
+        - scripts/ai/gate_python.py
+        - scripts/ai/toolchain_audit.py
+      caveats:
+        - "macOS + zsh + Homebrew; the containerized toolchain (docker/README.md) is separate"
 
     - id: todo-tracker
       path: .cursor/skills/todo-tracker/SKILL.md
@@ -368,6 +401,17 @@ foundations:
         - scripts/ai/skill_manifest.py
       governs: .claude/skill-manifest.yml
 
+    - id: mcp-integration
+      path: .cursor/skills/mcp-integration/SKILL.md
+      purpose: "The MCP surface on a built org — hosted + custom servers, the ECA, the clone invocable, the proxy. Foundations owns the whole surface: the org side (post_mcp + optional post_mcp_custom bundles, configure_mcp_servers, prepare_mcp flow) and the client tooling in scripts/mcp/. Carries the metadata-vs-Tooling-API constraint, and the rebuild-drift check"
+      consumed_by_pmos: []
+      tooling:
+        - tasks/rlm_mcp.py
+        - scripts/mcp/mcp_org.py
+        - scripts/mcp/mcp_auth.py
+        - scripts/mcp/mcp_multiplex_proxy.py
+        - scripts/mcp/write_connector_config.py
+
     - id: pde-org-build
       path: .cursor/skills/pde-org-build/SKILL.md
       purpose: "Build a PDE (or other org type) via runtime-only feature-flag overrides with a self-reverting script + Cloud-Agent command"
@@ -395,6 +439,15 @@ foundations:
         - scripts/docgen/docgen_template_build.py
         - scripts/docgen/docgen_template_manage.py
         - scripts/docgen/docgen_template_generate.py
+
+    - id: salesforce-contracts
+      path: .cursor/skills/salesforce-contracts/SKILL.md
+      purpose: "Salesforce Contracts CLM setup, org queries, clause and template authoring, lifecycle diagnosis, and migration"
+      consumed_by_pmos: []
+      sub_skills:
+        - .cursor/skills/salesforce-contracts/setup-and-diagnostics.md
+        - .cursor/skills/salesforce-contracts/content-and-migration.md
+        - .cursor/skills/salesforce-contracts/data-model-and-queries.md
 
     - id: df-workshop-setup
       path: .cursor/skills/df-workshop-setup/SKILL.md
@@ -484,11 +537,13 @@ foundations:
     # consumers can resolve a release-specific canvas via
     # `resolve_grounding(..., 'qb_demo_script_{release}')`. Add a new entry
     # each release when the corresponding markdown file is generated.
-    qb_demo_script_262:
-      path: docs/enablement/262/qb-demo-script.md
-      purpose: "QuantumBit demo-script canvas, Release 262 (Summer '26)"
+    qb_demo_script_264:
+      # Relabeled from the 262 draft on 2026-10-29 (262 orgs no longer exist); only the
+      # core QB-COMPLETE quote-to-order steps are verified on 264 so far.
+      path: docs/enablement/264/qb-demo-script.md
+      purpose: "QuantumBit demo-script canvas, Release 264 (Winter '27)"
       produced_by_skill: qb-demo-script
-      release: "262"
+      release: "264"
       status: draft  # awaits SME pass for Setup-UI, Known Bugs, image capture, Slack publish
       consumed_by_pmos: []  # PMOS narrative-polish pass is Phase 6.3+, opt-in
 
@@ -538,6 +593,8 @@ pmos:
     - "$RC_WORKSPACE/pmos"
     - "${HOME}/Documents/GitHub/Enterprise/_bgaldino/pmos-revenue-cloud"
     - "../pmos-revenue-cloud"
+  clone_markers:
+    - ".claude/skills"
 
   # Skills that PMOS holds canonically (subset relevant to Foundations)
   # Foundations skills can read these via cross-repo resolution.
@@ -692,5 +749,5 @@ studio:
   sibling_repos_known:
     - distill: not_modeled_in_manifest
     - aegis: not_modeled_in_manifest
-    # See revenue-cloud-platform.md for the 4-component picture; this manifest
-    # only covers the Foundations × PMOS bridge today.
+    # See revenue-cloud-platform.md for the 4-component picture. This manifest
+    # covers the Foundations × PMOS bridge only.

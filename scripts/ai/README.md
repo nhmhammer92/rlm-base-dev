@@ -13,37 +13,34 @@ pipeline and work with any AI coding agent.
 
 ### `query_erd.py`
 
-CLI tool for querying the Revenue Cloud data model stored in
-`docs/erds/erd-data.json` — Release 264 (Winter '27, API v68.0): 263
-objects, 4,252 platform fields, 674 verified relationship edges (custom
-fields excluded). The same JSON also exposes 1,148 reference fields in
-total — see the "Reference Fields" line in `query_erd.py stats` for the
-distinction. Avoids loading the 30K-line JSON file directly into AI
-context.
+CLI tool for querying the integrated Revenue Cloud and Contracts CLM model.
+It combines `docs/erds/erd-data.json` with the separately sourced
+`docs/erds/contracts-erd-data.json` — Release 264 (Winter '27, API v68.0):
+303 objects, 4,698 platform fields, 729 verified relationship edges across
+10 domains (custom fields excluded). The combined view also exposes 1,220
+reference fields — see the "Reference Fields" line in `query_erd.py stats`.
+Avoids loading the schema JSON files directly into AI context.
 
-⚠ **These figures are hardcoded prose with no generator behind them**, so a refresh
-staled every copy at once — the 262→264 pass missed this file, and `stats` printed
-264 figures while the line above still said 262. Four files carry them:
+The integrated count is hardcoded prose and is checked against both source datasets
+and the checked-in viewer. The Revenue Cloud base counts remain documented in the
+data-model and ERD reference pages; this CLI describes the combined viewer model.
+
+The core Revenue Cloud counts remain documented in the reference files below; this file describes the combined viewer model:
 
 | File | Carries | Gated by `tests/test_erd_doc_counts.py` |
 |---|---|---|
-| `scripts/ai/README.md` (this file) | objects, fields, relationships, **and `1,148` reference fields** | the triple, yes; `1,148`, **no** |
+| `scripts/ai/README.md` (this file) | combined viewer objects, fields, relationships, and reference fields | the combined triple and reference-field total, yes |
 | `docs/erds/README.md` | objects, fields, relationships | yes, prose **and** the Statistics bullets |
 | `.cursor/skills/revenue-cloud-data-model/SKILL.md` | objects, fields, relationships | yes |
 | `.cursor/skills/schema-validation/SKILL.md` | objects, fields, relationships | yes |
 
-**`python tests/test_erd_doc_counts.py` now gates the triple in all four**, per site
-rather than in aggregate, so a file that reworded or renamed its citation fails instead
-of quietly leaving the audit. The wrapped citation above — `263` on one line, `objects,
-4,252 platform fields…` on the next — is exactly the shape that escaped the first
-version of that check, so keep the phrase within three lines. Still unchecked, and
-still needing the manual sweep: the **`1,148` reference-field total**, which this file
-and `.cursor/skills/schema-validation/SKILL.md` both carry (the table above used to call
-this file its only copy — it is not, and a reader who trusted that would sweep one of the
-two); the org-describe pair (254 objects / 3,913 fields); and the orphan/gap baselines.
+`python tests/test_erd_doc_counts.py` checks the base citations in the three core
+reference pages and checks this file's combined viewer total against both JSON sources.
+Reference-field totals and the org-describe pair remain separate figures from the
+viewer totals; do not substitute one for another.
 
-`query_erd.py stats` is the generated source for all of them — reconcile against it,
-not against another doc.
+`query_erd.py stats` is the generated source for the integrated viewer counts —
+reconcile against it, not against another doc.
 
 ```bash
 python scripts/ai/query_erd.py describe Product2         # fields, relationships, domain
@@ -158,17 +155,23 @@ Two check modes:
   Register it as a code span or Markdown link; a mention in prose does not count.
 
   The rule-table check exists because `check` is the only leg that runs on a
-  pull request. It asserts the *outcome* — rows actually parsed, and at least as
-  many as there are `.cursor/rules/*.mdc` files — rather than merely that the
-  heading is present. The failure this repo produces is "keep the heading as a
+  pull request. It asserts the *outcome* — rows actually parsed, matched to the
+  `.cursor/rules/*.mdc` files by name (no unlisted rule, no row for a missing
+  one), with every row naming a skill or an explicit stand-alone note and every
+  skill target resolving on disk — rather than merely that the heading is
+  present. The failure this repo produces is "keep the heading as a
   pointer, move the table", which parses to zero rows and would otherwise render
   a coverage matrix claiming every rule is unlisted.
 - **Full generated-reference checks** (`check --full-generated-reference-checks`)
   — additionally dry-runs `generate_cci_reference.py`, which requires
   PyYAML/CumulusCI. Skipped with clear guidance when PyYAML is absent.
 
-PyYAML, when installed, enriches the `report` and `coverage` subcommands;
-without it they degrade gracefully to a line-oriented fallback.
+PyYAML, when installed, parses the skill manifest for the `report` subcommand;
+without it a line-oriented fallback is used. The fallback recognises skill paths
+only under `.cursor/skills/` and generated sub-files only under
+cci-orchestration — all the current manifest declares — so both give the same
+summary today. `coverage`
+does not read the manifest.
 
 **Outputs:**
 - `docs/analysis/tooling-optimization-report.md` — report (`report`)
@@ -289,14 +292,25 @@ silently each fail the suite.
 
 Runs the mechanical checks a change actually needs, and reports the status of **every**
 check — including the ones it skipped, and why. One command instead of remembering which
-of twenty-five validators a given diff should have run.
+of thirty validators a given diff should have run.
 
 ```bash
 python scripts/ai/pr_gate.py --base origin/main   # select from the diff vs a base ref
 python scripts/ai/pr_gate.py --all               # run everything
 python scripts/ai/pr_gate.py --list              # the matrix: check, gating, deps, triggers
 python scripts/ai/pr_gate.py --requirements --base origin/main   # pip deps the selection needs
+python scripts/ai/pr_gate.py --needs-node --base origin/main     # true when a selected check needs npm packages
 ```
+
+Any `python` can start it. When that interpreter lacks a selected check's dependency, the
+gate re-runs itself under the **gate interpreter**, the main checkout's `.venv` (also from a
+worktree), which `gate_python.py` resolves and probes. It prints a `note:` line saying so. If
+the gate interpreter is missing or incomplete, the note says why and the run continues, so
+`MISSING-DEP` reports what's absent. CI installs the selection's requirements into its own
+interpreter, so it never re-runs. Node is the exception to the re-run: the gate interpreter
+can't supply it, so a missing Node or `node_modules` (the `lwc_jest` check) goes straight to
+`MISSING-DEP`. CI sets up Node from `.nvmrc` and runs `npm ci --ignore-scripts` when
+`--needs-node` prints `true`. Setup: [local-installation.md, Step 6](../../docs/guides/local-installation.md#step-6--create-and-activate-a-virtual-environment-venv).
 
 Selection lives here rather than in a workflow's `paths:` filter because the two ways of not
 running fail in opposite directions. A workflow skipped by path filtering reports nothing, so a
@@ -308,7 +322,7 @@ not.) The same care drives four statuses that are easy to conflate:
 | status | meaning | fails? |
 |--------|---------|--------|
 | `SKIPPED` | not selected — nothing it covers changed | no, and it says so on its own line |
-| `MISSING-DEP` | selected, but a package or the interpreter floor is absent | **yes** — otherwise a broken install silently turns a gate green |
+| `MISSING-DEP` | selected, but a package, the interpreter floor, Node or `node_modules` is absent | **yes** — otherwise a broken install silently turns a gate green |
 | `ADVISORY` | runs and reports, never fails | no, and the reason is printed inline |
 | `ADVISORY-DEP` | advisory, and its dependency is absent too | no — an advisory check cannot fail for a missing dep either |
 
@@ -321,7 +335,7 @@ can live at `objectset_source/object-set-N/<Object>.csv`, an *alternative* to th
 pass only** — and only when the plan's top-level `useSeparatedCSVFiles` is `true`; pass 1 always reads
 the root regardless of the flag. Neither qualifier met, the root CSV is still owed. Both gates stay
 conditional on their own reason, so an `Upsert` object with no CSV anywhere still fails;
-`tests/test_sfdmu_csv_expectation.py` pins both directions in 217 cases. Two mechanisms make that
+`tests/test_sfdmu_csv_expectation.py` pins both directions in 221 cases. Two mechanisms make that
 pinning necessary rather than decorative. `_parse_object_configs` keeps only the *first* declaration,
 so reading the operation from the merged config would let a `Readonly` first pass silence a writable
 later pass. And the exemption has to be keyed on the **pass**, not the object: `BillingPolicy` in
@@ -528,14 +542,14 @@ it the violation, because on a correct file a working rule and a blind one retur
 answer. This file is densely commented precisely because each setting matters, which is what
 made the first version of three separate guards vacuous.
 
-A full `--all` run is 25 checks in about 100 seconds, of which the branch-scope *suite*
+A full `--all` run is 30 checks in about 100 seconds, of which the branch-scope *suite*
 (`tests/test_branch_scope.py`) is about 14. A typical docs-only selection is about 7 seconds, most
 of it the two checks that run on every change: `release_refs`, which reads every tracked text
-file (about 3), and `agent_tooling`. Measured 2026-10-11 on a workstation where all twenty-five
-ran, because no optional dependency was missing; a machine blocked on one (`docgen_suite` or
+file (about 3), and `agent_tooling`. Measured 2026-10-11, with twenty-five checks then, on a workstation where every
+one ran, because no optional dependency was missing; a machine blocked on one (`docgen_suite` or
 `harness_suites`) reports it rather than counting it, and its total is lower.
 
-Verified by `tests/test_pr_gate.py` (716 checks, throwaway repos, no network — hermetic for all but
+Verified by `tests/test_pr_gate.py` (756 checks, throwaway repos, no network — hermetic for all but
 one, the fixture that runs the real gate and so selects the real `skill_manifest` check, which
 resolves sibling repos by absolute path and therefore fails in a detached worktree), which
 drives the verdict rather than the helpers. Every mutation below is confirmed to fail the
@@ -555,7 +569,7 @@ empty stdout, indistinguishable from a clean tree, so it would drop uncommitted 
 the selection and, in the CCI-reference check, report "no drift" and pass — `--untracked-files=all`
 dropped, the setuptools co-requirement dropped or emitted after the package that needs it,
 a directory claim swallowing shell suites again, `pyproject.toml` removed from either
-pytest-driven check's triggers, each of the twenty-five trigger lists narrowed back off an input its
+pytest-driven check's triggers, each of the thirty trigger lists narrowed back off an input its
 check reads or a script it runs, and each of the four read-enumeration shapes stopped being recognised (directory
 arguments unexpanded, rooted single segments unseen, chain prefixes unfiltered, a root
 directory counted as a read). The rest of the corpus — the figure given below, counted
@@ -1460,10 +1474,13 @@ check on `main`, `preview/*` and `release/*` (repository settings, applied separ
   the gate), and CI pins `python-version: "3.13"` and exercises only that one
   version — so nothing is tested on 3.10.
 - **PyYAML** — required by `generate_cci_reference.py` (a YAML generator) and
-  used to enrich `skill_manifest.py` and `analyze_agent_tooling.py`
-  (available in the CCI venv). `skill_manifest.py` and
-  `analyze_agent_tooling.py` degrade to a stdlib-only fallback when it is
-  absent; `analyze_agent_tooling.py check` never needs it.
+  used by `skill_manifest.py` and `analyze_agent_tooling.py` when present
+  (available in the CCI venv). Both fall back to a stdlib-only parser when it
+  is absent: `skill_manifest.py`'s fallback handles a subset of YAML, while
+  `analyze_agent_tooling.py report` gives the same summary for the current
+  manifest. `analyze_agent_tooling.py check` never imports PyYAML; only its
+  opt-in `--full-generated-reference-checks` leg needs it, and is skipped
+  without it.
 - No other external dependencies
 
 ---
