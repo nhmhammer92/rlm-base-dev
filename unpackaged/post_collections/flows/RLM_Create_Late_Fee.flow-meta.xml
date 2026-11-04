@@ -2,13 +2,112 @@
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>68.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <description>Sets taxTreatmentId to the ID of the fallback tax treatment in Tax Treatment from GetAnyActiveTaxTreatment. Used when the org has no non-taxable tax treatment.</description>
+        <name>SetTaxTreatmentFromAnyActive</name>
+        <label>Set Tax Treatment from Any Active</label>
+        <locationX>314</locationX>
+        <locationY>458</locationY>
+        <assignmentItems>
+            <assignToReference>taxTreatmentId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>GetAnyActiveTaxTreatment.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>CanChargeLateFee</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <description>Sets taxTreatmentId to the ID of the record in Tax Treatment from GetNonTaxableTaxTreatment. A late fee is a finance charge, so a non-taxable treatment is preferred.</description>
+        <name>SetTaxTreatmentFromNonTaxable</name>
+        <label>Set Tax Treatment from Non Taxable</label>
+        <locationX>578</locationX>
+        <locationY>350</locationY>
+        <assignmentItems>
+            <assignToReference>taxTreatmentId</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>GetNonTaxableTaxTreatment.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>CanChargeLateFee</targetReference>
+        </connector>
+    </assignments>
     <customProperties>
         <name>ScreenProgressIndicator</name>
         <value>
             <stringValue>{&quot;location&quot;:&quot;top&quot;,&quot;type&quot;:&quot;simple&quot;}</stringValue>
         </value>
     </customProperties>
+    <decisions>
+        <description>Determines whether a late fee can be charged by checking that the collection plan has an account and that a tax treatment was resolved. A debit memo can&apos;t be created without an account, and it can&apos;t be posted unless every debit memo line has a tax treatment.</description>
+        <name>CanChargeLateFee</name>
+        <label>Can Charge Late Fee?</label>
+        <locationX>446</locationX>
+        <locationY>566</locationY>
+        <defaultConnector>
+            <targetReference>ScreenCannotChargeLateFee</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No (Default)</defaultConnectorLabel>
+        <rules>
+            <name>IsReadyToChargeLateFee</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetCollectionPlan.AccountId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>taxTreatmentId</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>ScreenEnterLateFeeDetails</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <description>Determines whether the org has an active non-taxable tax treatment to stamp on the debit memo line.</description>
+        <name>HasNonTaxableTaxTreatment</name>
+        <label>Has Non Taxable Tax Treatment?</label>
+        <locationX>446</locationX>
+        <locationY>242</locationY>
+        <defaultConnector>
+            <targetReference>GetAnyActiveTaxTreatment</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No (Default)</defaultConnectorLabel>
+        <rules>
+            <name>FoundNonTaxableTaxTreatment</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>GetNonTaxableTaxTreatment</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>SetTaxTreatmentFromNonTaxable</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
     <environments>Default</environments>
+    <formulas>
+        <description>Builds the default description for the late fee from the name of the collection plan.</description>
+        <name>LateFeeDescriptionFormula</name>
+        <dataType>String</dataType>
+        <expression>&quot;Late fee for collection plan &quot; &amp; {!GetCollectionPlan.Name}</expression>
+    </formulas>
     <interviewLabel>Create Late Fee {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Create Late Fee</label>
     <processMetadataValues>
@@ -31,35 +130,313 @@
     </processMetadataValues>
     <processType>Flow</processType>
     <recordCreates>
-        <name>Debit_Memo</name>
-        <label>Debit Memo</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
+        <description>Creates the late fee debit memo in a Draft state for the account of the collection plan. A debit memo can only be created in Draft; PostDebitMemo posts it once the line exists.</description>
+        <name>CreateDebitMemo</name>
+        <label>Create Debit Memo</label>
+        <locationX>578</locationX>
+        <locationY>782</locationY>
+        <connector>
+            <targetReference>CreateDebitMemoLine</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>RollBackLateFee</targetReference>
+        </faultConnector>
         <inputAssignments>
             <field>AccountId</field>
+            <value>
+                <elementReference>GetCollectionPlan.AccountId</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>CurrencyIsoCode</field>
+            <value>
+                <elementReference>GetCollectionPlan.CurrencyIsoCode</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Description</field>
+            <value>
+                <elementReference>LateFeeDescription</elementReference>
+            </value>
         </inputAssignments>
         <inputAssignments>
             <field>InvoiceGenerationStatus</field>
+            <value>
+                <stringValue>None</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>NextBillingDate</field>
+            <value>
+                <elementReference>$Flow.CurrentDate</elementReference>
+            </value>
         </inputAssignments>
         <inputAssignments>
             <field>Status</field>
+            <value>
+                <stringValue>Draft</stringValue>
+            </value>
         </inputAssignments>
         <object>DebitMemo</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordCreates>
+    <recordCreates>
+        <description>Creates the debit memo line that carries the late fee amount. The tax treatment is required: the debit memo can&apos;t be posted while any of its lines is missing one.</description>
+        <name>CreateDebitMemoLine</name>
+        <label>Create Debit Memo Line</label>
+        <locationX>578</locationX>
+        <locationY>890</locationY>
+        <connector>
+            <targetReference>PostDebitMemo</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>RollBackLateFee</targetReference>
+        </faultConnector>
+        <inputAssignments>
+            <field>ChargeAmount</field>
+            <value>
+                <elementReference>LateFeeAmount</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>DebitMemoId</field>
+            <value>
+                <elementReference>CreateDebitMemo</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Description</field>
+            <value>
+                <elementReference>LateFeeDescription</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>EndDate</field>
+            <value>
+                <elementReference>$Flow.CurrentDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Name</field>
+            <value>
+                <stringValue>Late Fee</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>StartDate</field>
+            <value>
+                <elementReference>$Flow.CurrentDate</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>TaxTreatmentId</field>
+            <value>
+                <elementReference>taxTreatmentId</elementReference>
+            </value>
+        </inputAssignments>
+        <object>DebitMemoLine</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordLookups>
+        <description>Gets the oldest active tax treatment of any kind. Fallback for orgs that have no non-taxable tax treatment. Stores the result in Tax Treatment from GetAnyActiveTaxTreatment.</description>
+        <name>GetAnyActiveTaxTreatment</name>
+        <label>Get Any Active Tax Treatment</label>
+        <locationX>314</locationX>
+        <locationY>350</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>SetTaxTreatmentFromAnyActive</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Active</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>TaxTreatment</object>
+        <sortField>CreatedDate</sortField>
+        <sortOrder>Asc</sortOrder>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Gets the collection plan record with an ID that matches the Collection Plan ID of the record that was passed into the flow. Stores the result in the Collection Plan from GetCollectionPlan record variable.</description>
+        <name>GetCollectionPlan</name>
+        <label>Get Collection Plan</label>
+        <locationX>446</locationX>
+        <locationY>134</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>GetNonTaxableTaxTreatment</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>recordId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CollectionPlan</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <description>Gets the oldest active non-taxable tax treatment, matching how the transaction data harness resolves one. Stores the result in Tax Treatment from GetNonTaxableTaxTreatment.</description>
+        <name>GetNonTaxableTaxTreatment</name>
+        <label>Get Non Taxable Tax Treatment</label>
+        <locationX>446</locationX>
+        <locationY>242</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>HasNonTaxableTaxTreatment</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>IsTaxable</field>
+            <operator>EqualTo</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Active</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>TaxTreatment</object>
+        <sortField>CreatedDate</sortField>
+        <sortOrder>Asc</sortOrder>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordRollbacks>
+        <description>Discards the debit memo and debit memo line when any step of the late fee fails. Without this, a handled fault leaves a half-built debit memo behind, and a posted debit memo can&apos;t be deleted.</description>
+        <name>RollBackLateFee</name>
+        <label>Roll Back Late Fee</label>
+        <locationX>842</locationX>
+        <locationY>1106</locationY>
+        <connector>
+            <targetReference>ScreenLateFeeFailed</targetReference>
+        </connector>
+    </recordRollbacks>
+    <recordUpdates>
+        <description>Posts the debit memo so the next invoice batch run picks it up. Posting sets InvoiceGenerationStatus to Ready for Invoice Generation automatically.</description>
+        <name>PostDebitMemo</name>
+        <label>Post Debit Memo</label>
+        <locationX>578</locationX>
+        <locationY>998</locationY>
+        <connector>
+            <targetReference>ScreenLateFeeCharged</targetReference>
+        </connector>
+        <faultConnector>
+            <targetReference>RollBackLateFee</targetReference>
+        </faultConnector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>CreateDebitMemo</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Posted</stringValue>
+            </value>
+        </inputAssignments>
+        <object>DebitMemo</object>
+    </recordUpdates>
     <screens>
-        <name>Create_Late_Fee</name>
+        <description>Tells the flow user why a late fee can&apos;t be charged for this collection plan.</description>
+        <name>ScreenCannotChargeLateFee</name>
+        <label>Can&apos;t Charge Late Fee</label>
+        <locationX>50</locationX>
+        <locationY>674</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>NoAccountDisplayText</name>
+            <fieldText>&lt;p&gt;This collection plan isn&apos;t linked to an account, so there&apos;s no customer to charge. Set the account on the collection plan and try again.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>GetCollectionPlan.AccountId</leftValueReference>
+                    <operator>IsNull</operator>
+                    <rightValue>
+                        <booleanValue>true</booleanValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <fields>
+            <name>NoTaxTreatmentDisplayText</name>
+            <fieldText>&lt;p&gt;This org has no active tax treatment. A debit memo can&apos;t be posted while any of its lines is missing one. Create a tax treatment in Setup, then try again.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <visibilityRule>
+                <conditionLogic>and</conditionLogic>
+                <conditions>
+                    <leftValueReference>taxTreatmentId</leftValueReference>
+                    <operator>IsNull</operator>
+                    <rightValue>
+                        <booleanValue>true</booleanValue>
+                    </rightValue>
+                </conditions>
+            </visibilityRule>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <description>Collects the amount and description of the late fee to charge to the account of the collection plan.</description>
+        <name>ScreenEnterLateFeeDetails</name>
         <label>Create Late Fee</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
+        <locationX>578</locationX>
+        <locationY>674</locationY>
         <allowBack>true</allowBack>
         <allowFinish>true</allowFinish>
         <allowPause>false</allowPause>
         <connector>
-            <targetReference>Debit_Memo</targetReference>
+            <targetReference>CreateDebitMemo</targetReference>
         </connector>
         <fields>
-            <name>Enter_Late_Fee_Amount</name>
+            <name>LateFeeContextDisplayText</name>
+            <fieldText>&lt;p&gt;Charging a late fee to &lt;strong&gt;{!GetCollectionPlan.Account.Name}&lt;/strong&gt;. The fee is posted as a debit memo and added to the next invoice run. A posted debit memo can&apos;t be deleted.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>LateFeeAmount</name>
             <dataType>Currency</dataType>
             <defaultValue>
                 <numberValue>10.0</numberValue>
@@ -67,8 +444,31 @@
             <fieldText>Enter Late Fee Amount</fieldText>
             <fieldType>InputField</fieldType>
             <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
-            <isRequired>false</isRequired>
+            <isRequired>true</isRequired>
             <scale>2</scale>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+            <validationRule>
+                <errorMessage>&lt;p&gt;&lt;span style=&quot;background-color: rgb(255, 255, 255); color: rgb(222, 12, 12);&quot;&gt;Enter a late fee amount greater than zero.&lt;/span&gt;&lt;/p&gt;</errorMessage>
+                <formulaExpression>{!LateFeeAmount} &gt; 0</formulaExpression>
+            </validationRule>
+        </fields>
+        <fields>
+            <name>LateFeeDescription</name>
+            <dataType>String</dataType>
+            <defaultValue>
+                <elementReference>LateFeeDescriptionFormula</elementReference>
+            </defaultValue>
+            <fieldText>Description</fieldText>
+            <fieldType>InputField</fieldType>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>false</isRequired>
             <styleProperties>
                 <verticalAlignment>
                     <stringValue>top</stringValue>
@@ -82,12 +482,78 @@
         <showFooter>true</showFooter>
         <showHeader>true</showHeader>
     </screens>
+    <screens>
+        <description>Confirms to the flow user that the late fee was charged and posted.</description>
+        <name>ScreenLateFeeCharged</name>
+        <label>Late Fee Charged</label>
+        <locationX>578</locationX>
+        <locationY>1106</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>LateFeeChargedDisplayText</name>
+            <fieldText>&lt;p&gt;&lt;strong&gt;A late fee of {!LateFeeAmount} was posted as a debit memo for {!GetCollectionPlan.Account.Name}.&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;It&apos;s added to the next invoice run for this account.&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
+    <screens>
+        <description>Shows the fault message after the late fee was rolled back, so nothing was saved.</description>
+        <name>ScreenLateFeeFailed</name>
+        <label>Late Fee Not Charged</label>
+        <locationX>842</locationX>
+        <locationY>1214</locationY>
+        <allowBack>false</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>false</allowPause>
+        <fields>
+            <name>LateFeeFailedDisplayText</name>
+            <fieldText>&lt;p&gt;&lt;strong&gt;The late fee wasn&apos;t charged and nothing was saved.&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;{!$Flow.FaultMessage}&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>true</showHeader>
+    </screens>
     <start>
-        <locationX>0</locationX>
+        <locationX>320</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Create_Late_Fee</targetReference>
+            <targetReference>GetCollectionPlan</targetReference>
         </connector>
     </start>
     <status>Active</status>
+    <variables>
+        <description>Stores the ID of the collection plan record that was passed into the flow.</description>
+        <name>recordId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <description>Stores the ID of the tax treatment to stamp on the debit memo line.</description>
+        <name>taxTreatmentId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
 </Flow>
