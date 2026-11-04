@@ -102,8 +102,10 @@ project:
     # ── Core Revenue Cloud Features ────────────────────────────────────────────
     billing: true             # Billing
     billing_ui: true          # Billing UI LWC components (post_billing_ui)
-    billing_portal: false     # Self-Service Billing Portal community
+    billing_portal: false     # Self-Service Billing Portal community (Aura template)
     billing_portal_deploy: true  # Deploy post_billing_portal site content (requires billing_portal)
+    billing_portal_lwr: false # LWR billing self-service site (Build Your Own LWR) hosting the 264 Posted Invoices, Invoice Line Viewer, Self-Service Payment Sheet, Self-Service Payment Confirmation and Manage Saved Payment Methods components. Needs payments: the Payment Sheet requires a merchant account
+    billing_portal_lwr_deploy: false  # Deploy post_billing_portal_lwr site content (requires billing_portal_lwr). Off until the bundle is populated from an org retrieve — see unpackaged/post_billing_portal_lwr/README.md
     payments: true            # Payments
     approvals: true           # Approvals
     tax: true                 # Tax engine
@@ -2108,6 +2110,32 @@ tasks:
     class_path: cumulusci.tasks.salesforce.Deploy
     options:
       path: unpackaged/post_billing_portal
+
+  create_billing_portal_lwr:
+    group: Revenue Lifecycle Management
+    description: >
+      Create the LWR billing self-service site (Experience Cloud site on the Build Your
+      Own (LWR) template). Hosts the Posted Invoices, Invoice Line Viewer, Self-Service
+      Payment Sheet, Self-Service Payment Confirmation and Manage Saved Payment Methods
+      components, which Salesforce offers only on LWR sites — the Aura Self-Service
+      Billing Portal template used by create_billing_portal cannot host them.
+    class_path: cumulusci.tasks.salesforce.CreateCommunity
+    options:
+      name: "Billing Self Service"
+      description: "RLM LWR Billing Self-Service Site"
+      template: "Build Your Own (LWR)"
+      url_path_prefix: "billingss"
+      skip_existing: true
+
+  deploy_post_billing_portal_lwr:
+    group: Revenue Lifecycle Management
+    description: >
+      Deploy LWR billing self-service site metadata (DigitalExperienceBundle, Network,
+      NavigationMenu) from unpackaged/post_billing_portal_lwr. Run when
+      billing_portal_lwr_deploy is true after create_billing_portal_lwr.
+    class_path: cumulusci.tasks.salesforce.Deploy
+    options:
+      path: unpackaged/post_billing_portal_lwr
 
 
 #------------------#
@@ -4400,6 +4428,44 @@ flows:
         when: project_config.project__custom__billing and project_config.project__custom__billing_portal
         options:
           name: "Billing Portal"
+      6:
+        flow: prepare_billing_portal_lwr
+
+  prepare_billing_portal_lwr:
+    group: Revenue Lifecycle Management
+    description: >
+      Create the LWR billing self-service site and optionally deploy its site content.
+      Every step is gated on billing, payments and billing_portal_lwr, so with any of
+      them false this flow is a no-op. The payments gate is not incidental: the
+      Self-Service Payment Sheet needs a merchant account, which prepare_payments sets up.
+      When all three are true, creates the site; when billing_portal_lwr_deploy is also
+      true, patches the network email placeholder, deploys
+      unpackaged/post_billing_portal_lwr, and reverts the placeholder before publishing.
+    steps:
+      1:
+        task: create_billing_portal_lwr
+        when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr
+      2:
+        task: patch_network_email_for_deploy
+        when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy
+        options:
+          network_name: "Billing Self Service"
+          network_meta_xml_path: "unpackaged/post_billing_portal_lwr/force-app/main/default/networks/Billing Self Service.network-meta.xml"
+          placeholder_email: billing-selfservice-sender@example.com
+      3:
+        task: deploy_post_billing_portal_lwr
+        when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy
+      4:
+        task: revert_network_email_after_deploy
+        when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy
+        options:
+          network_meta_xml_path: "unpackaged/post_billing_portal_lwr/force-app/main/default/networks/Billing Self Service.network-meta.xml"
+          placeholder_email: billing-selfservice-sender@example.com
+      5:
+        task: publish_community
+        when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr
+        options:
+          name: "Billing Self Service"
 
   prepare_tax:
     group: Revenue Lifecycle Management

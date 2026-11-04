@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/ai/generate_cci_reference.py` from `cumulusci.yml`.  
 > Do not edit manually — re-run the script after changing `cumulusci.yml`.
 
-**47 flows** across **5 groups**.
+**48 flows** across **5 groups**.
 
 ---
 
@@ -265,6 +265,27 @@ Create Self-Service Billing Portal community and optionally deploy site content.
    - `placeholder_email`: `billing-portal-sender@example.com`
 5. **task** `publish_community`  `when: project_config.project__custom__billing and project_config.project__custom__billing_portal`
    - `name`: `Billing Portal`
+6. **flow** `prepare_billing_portal_lwr`
+
+---
+
+### `prepare_billing_portal_lwr`
+
+Create the LWR billing self-service site and optionally deploy its site content. Every step is gated on billing, payments and billing_portal_lwr, so with any of them false this flow is a no-op. The payments gate is not incidental: the Self-Service Payment Sheet needs a merchant account, which prepare_payments sets up. When all three are true, creates the site; when billing_portal_lwr_deploy is also true, patches the network email placeholder, deploys unpackaged/post_billing_portal_lwr, and reverts the placeholder before publishing.
+
+**Steps:**
+
+1. **task** `create_billing_portal_lwr`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr`
+2. **task** `patch_network_email_for_deploy`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
+   - `network_name`: `Billing Self Service`
+   - `network_meta_xml_path`: `unpackaged/post_billing_portal_lwr/force-app/main/default/networks/Billing Self Service.network-m...`
+   - `placeholder_email`: `billing-selfservice-sender@example.com`
+3. **task** `deploy_post_billing_portal_lwr`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
+4. **task** `revert_network_email_after_deploy`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
+   - `network_meta_xml_path`: `unpackaged/post_billing_portal_lwr/force-app/main/default/networks/Billing Self Service.network-m...`
+   - `placeholder_email`: `billing-selfservice-sender@example.com`
+5. **task** `publish_community`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr`
+   - `name`: `Billing Self Service`
 
 ---
 

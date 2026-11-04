@@ -45,6 +45,7 @@ flow ordering and feature-flag conditions.
 | [Usage & Consumption Runbook](guides/usage-consumption-runbook.md) | Step-by-step: build a backdated asset, record usage, orchestrate, verify, reset — plus a symptom→cause table for when a consumption demo misbehaves |
 | [QB Consumption Demo Scenarios](guides/qb-consumption-demo-scenarios.md) | Nine usage/consumption demo scenarios (1–8 historically verified on Release 262; scenario 6 requires re-verification with current grant sizes; 9 platform-blocked), with worked arithmetic and execution-order guidance |
 | [Post-Billing Portal](guides/post-billing-portal.md) | Billing portal module setup and deployment |
+| [Post-Billing Portal LWR](guides/post-billing-portal-lwr.md) | LWR billing self-service site: the 264 Payment Sheet, Payment Confirmation and Manage Saved Payment Methods components, and the retrieve-and-sanitize round-trip that populates the bundle |
 | [Prepare RLM Org Build Guide](guides/prepare-rlm-org-build-guide.md) | Walkthrough of the `prepare_rlm_org` flow steps |
 | [CCI / SF CLI Token Workaround](guides/cci-sf-cli-token-workaround.md) | `INVALID_AUTH_HEADER` on a healthy scratch org — fixed in CumulusCI 4.10.1; history and personal cleanup |
 | [Build Harness](guides/build-harness.md) | Build harness profiles, resume, and reporting |

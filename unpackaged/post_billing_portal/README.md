@@ -146,3 +146,4 @@ git diff --stat unpackaged/post_billing_portal/force-app/main/default/networks/
 
 - [Repository Integration Skill](../../.cursor/skills/repo-integration/SKILL.md) - Feature integration patterns
 - [`docs/guides/post-billing-portal.md`](../../docs/guides/post-billing-portal.md) - Short pointer to this README
+- [`unpackaged/post_billing_portal_lwr/README.md`](../post_billing_portal_lwr/README.md) - The LWR billing self-service site. Release 264's Self-Service Payment Sheet, Self-Service Payment Confirmation and Manage Saved Payment Methods components are LWR-only, so this Aura bundle cannot host them

@@ -641,9 +641,11 @@ CHECKS = [
     dict(
         # Two pytest-style suites (test_ functions, no __main__) that `python tests/<name>.py`
         # would exit 0 on without running — the silent-green trap. Invoked through pytest for
-        # that reason. test_billing_portal_config asserts prepare_billing_portal's step gating
-        # (billing + billing_portal on all steps; billing_portal_deploy only on the bundle
-        # steps); test_generate_cci_reference pins _scan_when_clauses' exact-flag matching, so
+        # that reason. test_billing_portal_config asserts the step gating of both portal flows
+        # (billing + billing_portal on all prepare_billing_portal steps, billing_portal_deploy
+        # only on its bundle steps; billing + payments + billing_portal_lwr on every
+        # prepare_billing_portal_lwr step, since that nested flow step carries no `when` of its
+        # own); test_generate_cci_reference pins _scan_when_clauses' exact-flag matching, so
         # cumulusci.yml and generate_cci_reference.py are its triggers.
         name="billing_portal_suites",
         cmd=["python", "-m", "pytest", "-q",
@@ -653,6 +655,7 @@ CHECKS = [
         # this pytest-driven check rather than let it land unexercised.
         triggers=["cumulusci.yml", "scripts/ai/generate_cci_reference.py",
                   "unpackaged/post_billing_portal/",
+                  "unpackaged/post_billing_portal_lwr/",
                   "tests/test_billing_portal_config.py",
                   "tests/test_generate_cci_reference.py", "pyproject.toml"],
         deps=["pytest", "PyYAML"], gating=True,
