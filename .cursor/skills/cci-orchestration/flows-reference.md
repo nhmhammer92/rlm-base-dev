@@ -278,13 +278,19 @@ Create the LWR billing self-service site and optionally deploy its site content.
 1. **task** `create_billing_portal_lwr`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr`
 2. **task** `patch_network_email_for_deploy`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
    - `network_name`: `Billing Self Service`
-   - `network_meta_xml_path`: `unpackaged/post_billing_portal_lwr/force-app/main/default/networks/Billing Self Service.network-m...`
+   - `network_meta_xml_path`: `unpackaged/post_billing_portal_lwr/networks/Billing Self Service.network-meta.xml`
    - `placeholder_email`: `billing-selfservice-sender@example.com`
-3. **task** `deploy_post_billing_portal_lwr`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
-4. **task** `revert_network_email_after_deploy`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
-   - `network_meta_xml_path`: `unpackaged/post_billing_portal_lwr/force-app/main/default/networks/Billing Self Service.network-m...`
+3. **task** `patch_payments_site_for_deploy`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
+   - `site_meta_xml_path`: `unpackaged/post_billing_portal_lwr/sites/Billing_Self_Service.site-meta.xml`
+   - `placeholder_username`: `billing-selfservice-site-admin@example.com`
+4. **task** `deploy_post_billing_portal_lwr`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
+5. **task** `revert_network_email_after_deploy`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
+   - `network_meta_xml_path`: `unpackaged/post_billing_portal_lwr/networks/Billing Self Service.network-meta.xml`
    - `placeholder_email`: `billing-selfservice-sender@example.com`
-5. **task** `publish_community`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr`
+6. **task** `revert_payments_site_after_deploy`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy`
+   - `site_meta_xml_path`: `unpackaged/post_billing_portal_lwr/sites/Billing_Self_Service.site-meta.xml`
+   - `placeholder_username`: `billing-selfservice-site-admin@example.com`
+7. **task** `publish_community`  `when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr`
    - `name`: `Billing Self Service`
 
 ---

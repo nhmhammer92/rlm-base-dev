@@ -105,7 +105,7 @@ project:
     billing_portal: false     # Self-Service Billing Portal community (Aura template)
     billing_portal_deploy: true  # Deploy post_billing_portal site content (requires billing_portal)
     billing_portal_lwr: false # LWR billing self-service site (Build Your Own LWR) hosting the 264 Posted Invoices, Invoice Line Viewer, Self-Service Payment Sheet, Self-Service Payment Confirmation and Manage Saved Payment Methods components. Needs payments: the Payment Sheet requires a merchant account
-    billing_portal_lwr_deploy: false  # Deploy post_billing_portal_lwr site content (requires billing_portal_lwr). Off until the bundle is populated from an org retrieve — see unpackaged/post_billing_portal_lwr/README.md
+    billing_portal_lwr_deploy: false  # Deploy post_billing_portal_lwr site content (requires billing_portal_lwr). Off while the bundle holds only the bare Build Your Own (LWR) skeleton: the five billing components still have to be placed in Experience Builder and retrieved — see unpackaged/post_billing_portal_lwr/README.md
     payments: true            # Payments
     approvals: true           # Approvals
     tax: true                 # Tax engine
@@ -4450,18 +4450,33 @@ flows:
         when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy
         options:
           network_name: "Billing Self Service"
-          network_meta_xml_path: "unpackaged/post_billing_portal_lwr/force-app/main/default/networks/Billing Self Service.network-meta.xml"
+          network_meta_xml_path: "unpackaged/post_billing_portal_lwr/networks/Billing Self Service.network-meta.xml"
           placeholder_email: billing-selfservice-sender@example.com
       3:
+        # The bundle carries its CustomSite, whose siteAdmin and siteGuestRecordDefaultOwner
+        # are immutable after site creation and must name a user that exists in the target
+        # org. Same patch/revert pair prepare_payments uses for Payments_Webhook.
+        task: patch_payments_site_for_deploy
+        when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy
+        options:
+          site_meta_xml_path: "unpackaged/post_billing_portal_lwr/sites/Billing_Self_Service.site-meta.xml"
+          placeholder_username: billing-selfservice-site-admin@example.com
+      4:
         task: deploy_post_billing_portal_lwr
         when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy
-      4:
+      5:
         task: revert_network_email_after_deploy
         when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy
         options:
-          network_meta_xml_path: "unpackaged/post_billing_portal_lwr/force-app/main/default/networks/Billing Self Service.network-meta.xml"
+          network_meta_xml_path: "unpackaged/post_billing_portal_lwr/networks/Billing Self Service.network-meta.xml"
           placeholder_email: billing-selfservice-sender@example.com
-      5:
+      6:
+        task: revert_payments_site_after_deploy
+        when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr and project_config.project__custom__billing_portal_lwr_deploy
+        options:
+          site_meta_xml_path: "unpackaged/post_billing_portal_lwr/sites/Billing_Self_Service.site-meta.xml"
+          placeholder_username: billing-selfservice-site-admin@example.com
+      7:
         task: publish_community
         when: project_config.project__custom__billing and project_config.project__custom__payments and project_config.project__custom__billing_portal_lwr
         options:

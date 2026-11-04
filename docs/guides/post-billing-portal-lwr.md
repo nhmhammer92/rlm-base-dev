@@ -8,11 +8,11 @@ which appear in the Experience Builder palette only on LWR sites. The Aura Self-
 Portal in [`post_billing_portal`](post-billing-portal.md) cannot host them, so the two sites are
 separate Networks that run independently.
 
-The bundle is not populated yet: the components' internal names and attribute keys are neither
-published nor queryable, so the site content has to come from an org retrieve rather than
-hand-authored JSON. `billing_portal_lwr_deploy` therefore defaults to false, and
-`prepare_billing_portal_lwr` creates and publishes a bare Build Your Own (LWR) site until the
-round-trip is done.
+The bundle currently holds the unmodified Build Your Own (LWR) template retrieved from a 264 org;
+none of the five components is placed yet. Their internal names and attribute keys are neither
+published nor queryable, so they have to be dragged on in Experience Builder and the site
+re-retrieved rather than hand-authored. `billing_portal_lwr_deploy` therefore defaults to false
+until that is done.
 
 Deploy through the `prepare_billing_portal_lwr` flow, step 6 of `prepare_billing_portal`. When
 `billing`, `payments` and `billing_portal_lwr` are true, it creates and publishes the site. When

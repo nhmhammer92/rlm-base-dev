@@ -60,7 +60,7 @@ def test_every_lwr_site_step_requires_billing_payments_and_lwr_flags():
     steps = _steps("prepare_billing_portal_lwr")
     task_steps = _task_steps(steps)
 
-    assert len(task_steps) == len(steps) == 5
+    assert len(task_steps) == len(steps) == 7
     for step_number, step in task_steps.items():
         flags = _flags(step.get("when", ""))
         assert "billing" in flags, step_number
@@ -73,7 +73,34 @@ def test_every_lwr_site_step_requires_billing_payments_and_lwr_flags():
 def test_only_lwr_bundle_deploy_steps_require_billing_portal_lwr_deploy():
     steps = _steps("prepare_billing_portal_lwr")
 
-    for step_number in (2, 3, 4):
+    for step_number in (2, 3, 4, 5, 6):
         assert "billing_portal_lwr_deploy" in _flags(steps[step_number]["when"])
-    for step_number in (1, 5):
+    for step_number in (1, 7):
         assert "billing_portal_lwr_deploy" not in _flags(steps[step_number]["when"])
+
+
+def test_lwr_placeholders_in_the_bundle_match_what_the_flow_substitutes():
+    # A placeholder that drifts from the committed file fails the patch task at deploy time
+    # with "Placeholder not found", after the site has already been created.
+    steps = _steps("prepare_billing_portal_lwr")
+    bundle = ROOT / "unpackaged" / "post_billing_portal_lwr"
+
+    for step_number, option, tags in (
+        (2, "network_meta_xml_path", ("emailSenderAddress",)),
+        (3, "site_meta_xml_path", ("siteAdmin", "siteGuestRecordDefaultOwner")),
+    ):
+        options = steps[step_number]["options"]
+        path = ROOT / options[option]
+        assert bundle in path.parents, path
+        xml = path.read_text(encoding="utf-8")
+        placeholder = options.get("placeholder_email") or options["placeholder_username"]
+        for tag in tags:
+            assert f"<{tag}>{placeholder}</{tag}>" in xml, (step_number, tag)
+
+    # The revert steps have to write back exactly what the patch steps looked for, or the
+    # repo keeps the target org's real email and username after a successful deploy.
+    # network_name is read from the org by the patch step alone, so the revert omits it.
+    patch_network = dict(steps[2]["options"])
+    patch_network.pop("network_name")
+    assert steps[5]["options"] == patch_network
+    assert steps[6]["options"] == steps[3]["options"]
