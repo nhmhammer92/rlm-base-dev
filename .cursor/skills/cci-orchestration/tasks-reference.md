@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/ai/generate_cci_reference.py` from `cumulusci.yml`.  
 > Do not edit manually — re-run the script after changing `cumulusci.yml`.
 
-**276 tasks** across **9 groups**.
+**278 tasks** across **9 groups**.
 
 ---
 
@@ -884,7 +884,7 @@
 
 ## Revenue Lifecycle Management
 
-*179 task(s)*
+*181 task(s)*
 
 ### `activate_agents`
 
@@ -1370,6 +1370,22 @@
 
 ---
 
+### `create_billing_portal_lwr`
+
+**Description:** Create the LWR billing self-service site (Experience Cloud site on the Build Your Own (LWR) template). Hosts the Posted Invoices, Invoice Line Viewer, Self-Service Payment Sheet, Self-Service Payment Confirmation and Manage Saved Payment Methods components, which Salesforce offers only on LWR sites — the Aura Self-Service Billing Portal template used by create_billing_portal cannot host them.
+
+**Class:** `cumulusci.tasks.salesforce.CreateCommunity`
+
+**Options:**
+
+- `name`: `Billing Self Service`
+- `description`: `RLM LWR Billing Self-Service Site`
+- `template`: `Build Your Own (LWR)`
+- `url_path_prefix`: `billingss`
+- `skip_existing`: `True`
+
+---
+
 ### `create_default_invoice_email_template`
 
 **Description:** Create the "Default Invoice Email Template" (Lightning HTML template on Invoice, org public folder) that Billing Settings creates only from the Setup UI toggle, never from a Metadata API deploy. Same name, labels and merge fields as Core's; skips when an Invoice template with that name or developer name exists (it uses the developer name RLM_Default_Invoice_Email_Template if a non-Invoice template holds the usual one, matches either, and stops with an error if non-Invoice templates hold both). deploy_billing_email_template_settings then selects it.
@@ -1770,6 +1786,18 @@
 **Options:**
 
 - `path`: `unpackaged/post_billing_portal`
+
+---
+
+### `deploy_post_billing_portal_lwr`
+
+**Description:** Deploy LWR billing self-service site metadata (DigitalExperienceBundle, Network, NavigationMenu) from unpackaged/post_billing_portal_lwr. Run when billing_portal_lwr_deploy is true after create_billing_portal_lwr.
+
+**Class:** `cumulusci.tasks.salesforce.Deploy`
+
+**Options:**
+
+- `path`: `unpackaged/post_billing_portal_lwr`
 
 ---
 

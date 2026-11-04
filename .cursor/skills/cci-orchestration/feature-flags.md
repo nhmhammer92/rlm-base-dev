@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/ai/generate_cci_reference.py` from `cumulusci.yml`.  
 > Do not edit manually — re-run the script after changing `cumulusci.yml`.
 
-**45 feature flags**, **88 configuration values**, **43 YAML anchors** under `project.custom`.
+**47 feature flags**, **88 configuration values**, **43 YAML anchors** under `project.custom`.
 
 ---
 
@@ -16,9 +16,11 @@ Boolean flags that gate task/flow execution via `when:` clauses.
 | `agents` | `True` | 10 flow step(s) |
 | `analytics` | `True` | 2 flow step(s) |
 | `approvals` | `True` | 8 flow step(s) |
-| `billing` | `True` | 23 flow step(s) |
+| `billing` | `True` | 30 flow step(s) |
 | `billing_portal` | `False` | 5 flow step(s) |
 | `billing_portal_deploy` | `True` | 3 flow step(s) |
+| `billing_portal_lwr` | `False` | 7 flow step(s) |
+| `billing_portal_lwr_deploy` | `False` | 5 flow step(s) |
 | `billing_ui` | `True` | 4 flow step(s) |
 | `breconfig` | `False` | 2 flow step(s) |
 | `calmdelete` | `True` | 1 flow step(s) |
@@ -36,7 +38,7 @@ Boolean flags that gate task/flow execution via `when:` clauses.
 | `large_stx` | `False` | 5 flow step(s) |
 | `mcp` | `False` | 4 flow step(s) |
 | `mcp_custom_server` | `True` | 2 flow step(s) |
-| `payments` | `True` | 8 flow step(s) |
+| `payments` | `True` | 15 flow step(s) |
 | `pde` | `False` | — |
 | `personas` | `True` | 15 flow step(s) |
 | `prm` | `True` | 24 flow step(s) |
@@ -115,6 +117,13 @@ Boolean flags that gate task/flow execution via `when:` clauses.
 - `prepare_billing_portal` step 3 → `deploy_post_billing_portal`
 - `prepare_billing_portal` step 4 → `revert_network_email_after_deploy`
 - `prepare_billing_portal` step 5 → `publish_community`
+- `prepare_billing_portal_lwr` step 1 → `create_billing_portal_lwr`
+- `prepare_billing_portal_lwr` step 2 → `patch_network_email_for_deploy`
+- `prepare_billing_portal_lwr` step 3 → `patch_payments_site_for_deploy`
+- `prepare_billing_portal_lwr` step 4 → `deploy_post_billing_portal_lwr`
+- `prepare_billing_portal_lwr` step 5 → `revert_network_email_after_deploy`
+- `prepare_billing_portal_lwr` step 6 → `revert_payments_site_after_deploy`
+- `prepare_billing_portal_lwr` step 7 → `publish_community`
 - `run_qb_idempotency_tests` step 12 → `test_qb_billing_idempotency`
 - `run_q3_idempotency_tests` step 8 → `test_q3_billing_idempotency`
 
@@ -131,6 +140,24 @@ Boolean flags that gate task/flow execution via `when:` clauses.
 - `prepare_billing_portal` step 2 → `patch_network_email_for_deploy`
 - `prepare_billing_portal` step 3 → `deploy_post_billing_portal`
 - `prepare_billing_portal` step 4 → `revert_network_email_after_deploy`
+
+### `billing_portal_lwr` (default: `False`)
+
+- `prepare_billing_portal_lwr` step 1 → `create_billing_portal_lwr`
+- `prepare_billing_portal_lwr` step 2 → `patch_network_email_for_deploy`
+- `prepare_billing_portal_lwr` step 3 → `patch_payments_site_for_deploy`
+- `prepare_billing_portal_lwr` step 4 → `deploy_post_billing_portal_lwr`
+- `prepare_billing_portal_lwr` step 5 → `revert_network_email_after_deploy`
+- `prepare_billing_portal_lwr` step 6 → `revert_payments_site_after_deploy`
+- `prepare_billing_portal_lwr` step 7 → `publish_community`
+
+### `billing_portal_lwr_deploy` (default: `False`)
+
+- `prepare_billing_portal_lwr` step 2 → `patch_network_email_for_deploy`
+- `prepare_billing_portal_lwr` step 3 → `patch_payments_site_for_deploy`
+- `prepare_billing_portal_lwr` step 4 → `deploy_post_billing_portal_lwr`
+- `prepare_billing_portal_lwr` step 5 → `revert_network_email_after_deploy`
+- `prepare_billing_portal_lwr` step 6 → `revert_payments_site_after_deploy`
 
 ### `billing_ui` (default: `True`)
 
@@ -252,6 +279,13 @@ Boolean flags that gate task/flow execution via `when:` clauses.
 
 ### `payments` (default: `True`)
 
+- `prepare_billing_portal_lwr` step 1 → `create_billing_portal_lwr`
+- `prepare_billing_portal_lwr` step 2 → `patch_network_email_for_deploy`
+- `prepare_billing_portal_lwr` step 3 → `patch_payments_site_for_deploy`
+- `prepare_billing_portal_lwr` step 4 → `deploy_post_billing_portal_lwr`
+- `prepare_billing_portal_lwr` step 5 → `revert_network_email_after_deploy`
+- `prepare_billing_portal_lwr` step 6 → `revert_payments_site_after_deploy`
+- `prepare_billing_portal_lwr` step 7 → `publish_community`
 - `prepare_payments` step 1 → `create_payments_webhook`
 - `prepare_payments` step 2 → `patch_payments_site_for_deploy`
 - `prepare_payments` step 3 → `deploy_post_payments_site`
