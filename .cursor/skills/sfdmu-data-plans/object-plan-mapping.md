@@ -7,7 +7,7 @@ Which SObject lives in which data plan, its externalId, operation, and upstream 
 > relationship-traversal Upsert bugs (Bugs 2/3/5), which are **fixed on the enforced
 > 5.6.4+ floor** — Upsert now matches on traversal externalIds. The plans still carry the
 > old operation until the gated `sfdmu-v5-optimization` migration. When authoring a *new*
-> plan on 5.6.4+, use `Upsert` for traversal externalIds; only Bug 4 (`$$` in lookup reference columns — self-referential and cross-object) is live.
+> plan on 5.6.4+, use `Upsert` for traversal externalIds; only Bug 4 (a `$$` lookup reference that's self-referential or doesn't match the parent's `externalId`) is live.
 
 ## qb-pcm (Product Catalog Management — 28 objects)
 
@@ -158,7 +158,7 @@ Nothing in qb-rating is deleted or activated by SFDMU; `activateRatingRecords.ap
 | FulfillmentStepDependencyDef | `Name` | Upsert | |
 | ProductFulfillmentScenario | `Name` | Upsert | |
 | FulfillmentWorkspace | `Name` | Upsert | |
-| FulfillmentWorkspaceItem | `FulfillmentWorkspace.Name;FulfillmentStepDefinitionGroup.Name` | Upsert + deleteOldData | Bug 5 — auto-number Name |
+| FulfillmentWorkspaceItem | `FulfillmentWorkspace.Name;FulfillmentStepDefinitionGroup.Name` | Upsert | Auto-number Name; matches on the 5.6.4+ floor (todo 326) |
 | FulfillmentFalloutRule | `Name` | Upsert | |
 | FulfillmentStepJeopardyRule | `Name` | Upsert | |
 | FulfillmentTaskAssignmentRule | `Name` | Upsert | |
@@ -195,7 +195,6 @@ Product2 guided-selling field values are loaded as a separate decorator plan aft
 | Plan | SObject | externalId | Operation |
 |------|---------|-----------|-----------|
 | qb-transactionprocessingtypes | TransactionProcessingType | `DeveloperName` | Upsert |
-| qb-product-images | Product2 | `StockKeepingUnit` | Update (DisplayUrl) |
 | qb-approvals | ApprovalAlertContentDef | `Name` | Upsert |
 | qb-approvals | EmailTemplate | — | ReadOnly |
 | scratch_data | Account | `Name` | Upsert |

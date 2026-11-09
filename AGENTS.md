@@ -128,13 +128,12 @@ is the separate, gated `sfdmu-v5-optimization` initiative (needs live
 verification + explicit per-operation approval — do not flip operations ad hoc;
 see the CRITICAL rule below).
 
-**Bug 4 — `$$` composite notation fails for lookup reference columns (STILL PRESENT, incl. 5.8.0)**
-When a CSV uses `$$` composite notation for a **lookup reference** — self-referential
-(e.g. `ParentGroup.$$Code$ParentProduct.StockKeepingUnit`) *or cross-object* — SFDMU
-cannot decompose the composite value to resolve the referenced record. (The primary
-`$$` externalId-matching column is unaffected.)
-**Fix:** Use simple single-field references for lookup columns
-(e.g. `ParentGroup.Code`). Non-destructive — no `deleteOldData`.
+**Bug 4 — a `$$` lookup column that doesn't match its parent's key (STILL PRESENT, 5.8.0)**
+A `$$` lookup column (e.g. `Pricebook2.$$Name$IsStandard`) resolves only when its parts
+are exactly the parent's `externalId` in the same pass. Self-references
+(`ParentGroup.$$Code$ParentProduct.StockKeepingUnit`) and differently keyed parents fail.
+**Fix:** a single-field reference (`ParentGroup.Code`), or key the parent on those parts.
+`scripts/ai/check_sfdmu_layering.py` flags it.
 
 Historical Bugs 1/2/3/5 and their fixed versions are documented in
 `.cursor/skills/sfdmu-data-plans/SKILL.md` → **v5 Bugs**.
@@ -298,8 +297,9 @@ that topic.
 | Run the containerized toolchain (Docker image + `rlm` wrapper + devcontainer) | `docker/README.md` |
 | Add new features, code placement | `.cursor/skills/repo-integration/SKILL.md` |
 | Work with CCI tasks, flows, CLI | `.cursor/skills/cci-orchestration/SKILL.md` |
-| Wire pricing recipes/procedures/plans | `.cursor/skills/pricing-wiring/SKILL.md` |
-| Author/CRUD Expression Sets (pricing procedures, etc.) via Connect/Metadata API; build step overlays | `.cursor/skills/expression-sets/SKILL.md` |
+| Set up pricing; routes to repo pricing wiring | `.cursor/skills/pricing-setup/SKILL.md` |
+| Author/CRUD Expression Sets via Connect/Metadata API; build step overlays | `.cursor/skills/expression-sets/SKILL.md` |
+| Configure **pricing elements** + ordering (Aggregate, Price Revision, discounts) | `.cursor/skills/pricing-procedures/SKILL.md` |
 | Edit/ship/debug **Constraint models** (CML) — configurator bundle rules, `.ffxblob`, why a model change does not take effect | `.cursor/skills/constraint-models/SKILL.md` |
 | Read/extend/apply/deploy/upgrade Context Definitions (Context Service); inspect/validate context plans | `.cursor/skills/context-service/SKILL.md` |
 | Inspect/author/manage, refresh, diagnose, or verify **decision tables**; wire automatic refresh at the right moment | `.cursor/skills/decision-tables/SKILL.md` |

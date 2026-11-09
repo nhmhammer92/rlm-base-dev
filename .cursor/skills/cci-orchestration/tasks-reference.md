@@ -3,7 +3,7 @@
 > **Auto-generated** by `scripts/ai/generate_cci_reference.py` from `cumulusci.yml`.  
 > Do not edit manually — re-run the script after changing `cumulusci.yml`.
 
-**276 tasks** across **9 groups**.
+**275 tasks** across **9 groups**.
 
 ---
 
@@ -123,7 +123,7 @@
 
 ### `update_currency_rates`
 
-**Description:** Fetch live USD exchange rates from Open Exchange Rates (no auth required) and patch CurrencyType.ConversionRate for all active non-corporate currencies in a running org. Use iso_codes to restrict (e.g. 'EUR,GBP'). Use dry_run true to preview without updating.
+**Description:** Fetch live USD exchange rates from ExchangeRate-API (open.er-api.com, no auth required) and patch CurrencyType.ConversionRate for all active non-corporate currencies in a running org. Use iso_codes to restrict (e.g. 'EUR,GBP'). Use dry_run true to preview without updating.
 
 **Class:** `tasks.rlm_currency.UpdateCurrencyRates`
 
@@ -131,7 +131,7 @@
 
 ### `update_currency_rates_csv`
 
-**Description:** Fetch live USD exchange rates from Open Exchange Rates (no auth required) and update CurrencyType.csv in the qb-pricing SFDMU plan. Commit the result so future scratch org builds use current rates. Use iso_codes to restrict (e.g. 'EUR,GBP'). Use dry_run true to preview without writing.
+**Description:** Fetch live USD exchange rates from ExchangeRate-API (open.er-api.com, no auth required) and update CurrencyType.csv in the qb-pricing SFDMU plan. Commit the result so future scratch org builds use current rates. Use iso_codes to restrict (e.g. 'EUR,GBP'). Use dry_run true to preview without writing.
 
 **Class:** `tasks.rlm_currency.UpdateCurrencyRatesCsv`
 
@@ -139,7 +139,7 @@
 
 ## Data Management - Extract
 
-*27 task(s)*
+*26 task(s)*
 
 ### `export_bre_rule_library`
 
@@ -155,7 +155,7 @@
 
 ### `extract_q3_billing_data`
 
-**Description:** Extract q3-billing from org to CSV, aligned to the qb-billing schema. Output in datasets/sfdmu/extractions/q3-billing/<timestamp>/processed/. Use run_post_process false to skip.
+**Description:** Extract the q3-billing product mapping (Product2.BillingPolicy) from org to CSV. Output in datasets/sfdmu/extractions/q3-billing/<timestamp>/processed/. Use run_post_process false to skip.
 
 **Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
 
@@ -167,7 +167,7 @@
 
 ### `extract_q3_dro_data`
 
-**Description:** Extract q3-dro from org to CSV, aligned to the qb-dro schema. Output in datasets/sfdmu/extractions/q3-dro/<timestamp>/processed/. Use run_post_process false to skip.
+**Description:** Extract the q3-dro product decomposition settings (Product2) from org to CSV. Output in datasets/sfdmu/extractions/q3-dro/<timestamp>/processed/. Use run_post_process false to skip.
 
 **Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
 
@@ -240,7 +240,7 @@
 
 ### `extract_q3_tax_data`
 
-**Description:** Extract q3-tax from org to CSV, aligned to the qb-tax schema. Output in datasets/sfdmu/extractions/q3-tax/<timestamp>/processed/. Use run_post_process false to skip.
+**Description:** Extract the q3-tax product mapping (Product2.TaxPolicy) from org to CSV. Output in datasets/sfdmu/extractions/q3-tax/<timestamp>/processed/. Use run_post_process false to skip.
 
 **Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
 
@@ -370,18 +370,6 @@
 
 ---
 
-### `extract_qb_product_images_data`
-
-**Description:** Extract qb-product-images from org to CSV. Output in datasets/sfdmu/extractions/qb-product-images/<timestamp>. Runs post-process by default; re-import-ready CSVs in <timestamp>/processed/. Use run_post_process false to skip.
-
-**Class:** `tasks.rlm_sfdmu.ExtractSFDMUData`
-
-**Options:**
-
-- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-product-images`
-
----
-
 ### `extract_qb_rates_data`
 
 **Description:** Extract qb-rates from org to CSV. Output in datasets/sfdmu/extractions/qb-rates/<timestamp>. Runs post-process by default; re-import-ready CSVs in <timestamp>/processed/. Use run_post_process false to skip.
@@ -471,9 +459,22 @@
 
 *24 task(s)*
 
+### `test_inapp_idempotency`
+
+**Description:** Idempotency test for inapp (In-App Learning navigation content). Every object is Upsert since todo 334.
+
+**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
+
+**Options:**
+
+- `pathtoexportjson`: `datasets/sfdmu/inapp`
+- `use_extraction_roundtrip`: `False`
+
+---
+
 ### `test_q3_billing_idempotency`
 
-**Description:** Idempotency test for q3-billing. Requires the Billing feature enabled on the target org (q3-262 reports GeneralLedgerAccount/BillingPolicy unsupported).
+**Description:** Idempotency test for q3-billing (the q3 product billing-policy mapping; needs qb-billing loaded and the Billing feature enabled).
 
 **Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
 
@@ -486,7 +487,7 @@
 
 ### `test_q3_dro_idempotency`
 
-**Description:** Idempotency test for q3-dro. Requires the DRO feature enabled on the target org (q3-262 has no DRO records).
+**Description:** Idempotency test for q3-dro (the q3 products' decomposition settings). Requires the DRO feature enabled on the target org.
 
 **Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
 
@@ -566,7 +567,7 @@
 
 ### `test_q3_tax_idempotency`
 
-**Description:** Idempotency test for q3-tax (tax policies and treatments).
+**Description:** Idempotency test for q3-tax (the q3 product tax-policy mapping; needs qb-tax loaded).
 
 **Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
 
@@ -618,7 +619,7 @@
 
 ### `test_qb_dro_idempotency`
 
-**Description:** Idempotency test for qb-dro. Note: plan uses dynamic_assigned_to_user for load; test runs without it (scratch org user may differ).
+**Description:** Idempotency test for qb-dro (AssignedTo resolved from target org, as insert_qb_dro_data does).
 
 **Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
 
@@ -626,6 +627,7 @@
 
 - `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-dro`
 - `use_extraction_roundtrip`: `False`
+- `dynamic_assigned_to_user`: `True`
 
 ---
 
@@ -705,19 +707,6 @@
 **Options:**
 
 - `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-prm-pricing`
-- `use_extraction_roundtrip`: `False`
-
----
-
-### `test_qb_product_images_idempotency`
-
-**Description:** Idempotency test for qb-product-images.
-
-**Class:** `tasks.rlm_sfdmu.TestSFDMUIdempotency`
-
-**Options:**
-
-- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-product-images`
 - `use_extraction_roundtrip`: `False`
 
 ---
@@ -1115,6 +1104,23 @@
 
 - `developer_name`: `RLM_SalesTransactionContext`
 - `plan_file`: `datasets/context_plans/ConstraintEngineNodeStatus/manifest.json`
+- `translate_plan`: `True`
+- `deactivate_before`: `False`
+- `activate`: `True`
+- `verify`: `True`
+
+---
+
+### `apply_context_contract_pricing`
+
+**Description:** Adds the RLM_Contract_Applied_Unit_Price__c attribute and tag to RLM_SalesTransactionContext with a QuoteLineItem mapping, using an additive Context Service plan, so RLM_DefaultPricingProcedure can remember the contract price it copied into Sales Price and replace it when the contract price changes or no longer applies. Runs in extend_context_definitions because the procedure references the tag and is first deployed by prepare_expression_sets.
+
+**Class:** `tasks.rlm_context_service.ManageContextDefinition`
+
+**Options:**
+
+- `developer_name`: `RLM_SalesTransactionContext`
+- `plan_file`: `datasets/context_plans/ContractPricing/manifest.json`
 - `translate_plan`: `True`
 - `deactivate_before`: `False`
 - `activate`: `True`
@@ -2406,7 +2412,7 @@
 
 ### `insert_q3_billing_data`
 
-**Description:** Insert Q3 Billing Data
+**Description:** Map the Q3 products onto the qb-billing policies (run insert_billing_data first)
 
 **Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
 
@@ -2418,27 +2424,25 @@
 
 ### `insert_q3_dro_data_prod`
 
-**Description:** Insert Q3 DRO Data to Production
+**Description:** Set the Q3 products' decomposition scope (non-scratch orgs)
 
 **Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
 
 **Options:**
 
 - `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-dro`
-- `dynamic_assigned_to_user`: `True`
 
 ---
 
 ### `insert_q3_dro_data_scratch`
 
-**Description:** Insert Q3 DRO Data to Scratch
+**Description:** Set the Q3 products' decomposition scope (scratch orgs)
 
 **Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
 
 **Options:**
 
 - `pathtoexportjson`: `datasets/sfdmu/q3/en-US/q3-dro`
-- `dynamic_assigned_to_user`: `True`
 
 ---
 
@@ -2505,7 +2509,7 @@
 
 ### `insert_q3_tax_data`
 
-**Description:** Insert Q3 Tax Data
+**Description:** Map the Q3 products onto the qb-tax policies (run insert_tax_data first)
 
 **Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
 
@@ -2682,18 +2686,6 @@
 **Options:**
 
 - `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-prm-pricing`
-
----
-
-### `insert_quantumbit_product_image_data`
-
-**Description:** Insert QuantumBit Product Image Data
-
-**Class:** `tasks.rlm_sfdmu.LoadSFDMUData`
-
-**Options:**
-
-- `pathtoexportjson`: `datasets/sfdmu/qb/en-US/qb-product-images`
 
 ---
 

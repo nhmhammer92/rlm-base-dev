@@ -3,8 +3,8 @@ name: pricing-wiring
 description: >-
   Wire Revenue Cloud pricing recipes, recipe-table mappings, procedure plans, and
   feature overlays in dependency order. Use when pricing changes span these layers; use
-  expression-sets for procedure authoring and decision-tables for lookup definition or
-  refresh work.
+  expression-sets for procedure authoring, pricing-procedures for element configuration,
+  and decision-tables for lookup definition or refresh work.
 ---
 
 # Pricing Dependency and Layering Skill
@@ -33,9 +33,11 @@ pattern as PRM pricing without redesigning setup order each time.
    a known org/runtime issue requires it.
 7. For **authoring or CRUD'ing pricing procedures themselves** (Connect vs
    Metadata API, overlays, dependency capture, the activation lifecycle), use the
-   **Expression Sets skill** (`.cursor/skills/expression-sets/SKILL.md`). This
-   skill (section E) covers only where that work slots into the pricing
-   layering model.
+   **Expression Sets skill** (`.cursor/skills/expression-sets/SKILL.md`). To
+   configure the **elements** inside a procedure (Aggregate Price, discounts,
+   Price Revision, DDS, element ordering), use the **Pricing Procedures skill**
+   (`.cursor/skills/pricing-procedures/SKILL.md`). This skill (section E) covers
+   only where that work slots into the pricing layering model.
 
 ## DO NOT
 
@@ -84,7 +86,8 @@ be no-op safe.
 ### A) Pricing Recipe Table Mappings
 
 A `ListPrice`/lookup-driven procedure step can fail even if the decision table
-exists and is Active, if the recipe table mapping row is absent.
+exists and is Active, if the recipe table mapping row is absent. Recipe concept,
+subtype and the Setup UI: `.cursor/skills/pricing-setup/pricing-recipes.md`.
 
 Typical failure:
 
@@ -229,6 +232,10 @@ rules — is owned by a dedicated skill:
 > `docs/references/expression-set-connect-api-reference.md` (object/ID model,
 > OAS-confirmed schema enums, every known error + resolution, verification
 > checklist). Both pinned to **Release 264 / API v68.0**.
+>
+> **Pricing Procedures skill:** `.cursor/skills/pricing-procedures/SKILL.md` —
+> what each pricing element does, its parameters, element ordering rules and
+> day-2 operations (one sub-file per element under `elements/`).
 
 **What stays a pricing concern (this section):** *where* that CRUD slots into the
 pricing layering and flow order, and the pricing-specific facts the Expression
@@ -312,7 +319,8 @@ cci task run refresh_dt_default_pricing
 
 (`refresh_dt_*` tasks accept `--org` as of 2026-07-27 — `RefreshDecisionTable` now sets
 `salesforce_task = True`. Before that they silently ran against the CCI **default** org.
-`manage_expression_sets` and most other custom tasks still reject it; see issue #320.)
+`manage_expression_sets` accepts `--org` too, and `tests/test_cci_task_org_option.py` fails the
+gate for any task that reads `self.org_config` without `salesforce_task = True`.)
 
 **Use the table's latest sync — the later of `LastSyncDate` and `LastIncrementalSyncDate`
 — to decide whether a refresh happened.** Release 264 can run a full request as
@@ -463,6 +471,32 @@ that demo's feature bundle.
 Offline guard: `python tests/test_qb_multicurrency_data.py`.
 Live guard: `cci task run validate_multicurrency_rates`.
 
+**Refreshing exchange rates in the plans.** qb/en-US qb-pricing's `CurrencyType.csv` is the rate table for
+the USD-corporate shapes that share a currency with qb (q3 since todo 328), so refresh it there and copy
+the shared rates. qb/ja's is JPY-corporate (USD 0.00663): never point the task's `csv_path` at it, as it
+would write USD-based rates into a JPY-based table.
+
+1. `cci task run update_currency_rates_csv` (preview with `-o dry_run true`; restrict with `-o iso_codes EUR,GBP`).
+   It writes qb-pricing's CSV by default; pass `-o csv_path` for another plan's.
+2. Regenerate qb's converted prices: `python scripts/expand_currency_pricing_data.py --apply`.
+3. Copy the six shared rates into `q3-pricing/CurrencyType.csv`, then
+   `python scripts/expand_currency_pricing_data.py --plan datasets/sfdmu/q3/en-US/q3-pricing --currencies AUD,CAD,CHF,EUR,GBP,JPY --apply`.
+   Review the diff: the script also creates six-currency rows for q3's six USD-only entries and for
+   its adjustment, tier and derived-price rows, which carry USD only today.
+4. To bring a built org in line, reload the regenerated plans (`CurrencyType` and `PricebookEntry` are
+   `Upsert`, so the rows update in place), then refresh the pricing decision tables:
+   `cci task run refresh_dt_default_pricing --org <cci_alias>` and
+   `cci task run refresh_dt_pricing_discovery --org <cci_alias>` (or `cci flow run
+   refresh_all_decision_tables --org <cci_alias>`, which runs both). Pricing reads their snapshots, not
+   the entries, so until the refresh the org keeps quoting the old prices. The refresh only queues the
+   tables; once the queue drains, confirm with `cci task run check_decision_table_freshness --org
+   <cci_alias>`: no pricing table should be Stale (a "Not comparable" table isn't a failure). `cci task run update_currency_rates` changes only the org's
+   `CurrencyType` rates (fetched live again, not read from the CSV) and leaves its prices stale; without
+   `-o iso_codes` it patches every active non-corporate currency, including q3's own and mfg's.
+
+Prices in a currency follow its rate, so never change one without the other. mfg keeps its own rates
+until todo 327.
+
 ### active version update failures
 
 Confirm deactivate step runs before deploy and targets correct versions.
@@ -563,6 +597,9 @@ Use this quick checklist whenever pricing changes add or consume new context key
 - **Expression Sets skill (CRUD, overlays, dependency capture):**
   `.cursor/skills/expression-sets/SKILL.md` — the task-level entry point for
   authoring/mutating procedures themselves (the work §E points to).
+- **Pricing Procedures skill (element configuration, ordering, operations):**
+  `.cursor/skills/pricing-procedures/SKILL.md` — one sub-file per pricing element
+  under `elements/`.
 - **Expression Set reference (exhaustive):**
   `docs/references/expression-set-connect-api-reference.md` — object/ID model,
   OAS-confirmed schema enums, every known error + resolution, Metadata API

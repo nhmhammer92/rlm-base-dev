@@ -64,7 +64,7 @@ The validator checks for:
 - Legacy `$$` notation in externalId definitions (v5 requires semicolon format)
 - Missing composite key columns in CSVs
 - Empty CSV files without headers
-- Nested relationship paths that cause v5 flattening errors
+- Nested (2+ hop) relationship paths in an externalId, reported as Info: they match on SFDMU 5.6.4+, but an extraction can write their nested segments as `#N/A`. `post_process_extraction.py` backfills only the code columns it has a Name→Code map for and blanks the rest, so check an extracted CSV before reloading it
 
 To generate a validation report:
 
@@ -117,7 +117,6 @@ precedence over that base. See the [extraction task](../../tasks/rlm_sfdmu.py).
 | Data Plan | Directory | Description | Documentation |
 |-----------|-----------|-------------|---------------|
 | qb-pcm | `datasets/sfdmu/qb/en-US/qb-pcm/` | Product Catalog Management -- products, classifications, components, attributes | [README](../../datasets/sfdmu/qb/en-US/qb-pcm/README.md) |
-| qb-product-images | `datasets/sfdmu/qb/en-US/qb-product-images/` | Product images and content document links | [README](../../datasets/sfdmu/qb/en-US/qb-product-images/README.md) |
 | qb-pricing | `datasets/sfdmu/qb/en-US/qb-pricing/` | Pricing data (pricebook entries, price adjustments) | [README](../../datasets/sfdmu/qb/en-US/qb-pricing/README.md) |
 | qb-price-revision | `datasets/sfdmu/qb/en-US/qb-price-revision/` | CPI index rates (Region US) and Price Index / Flat price revision policies | [README](../../datasets/sfdmu/qb/en-US/qb-price-revision/README.md) |
 | qb-tax | `datasets/sfdmu/qb/en-US/qb-tax/` | Tax engine data (tax treatments, policies) | [README](../../datasets/sfdmu/qb/en-US/qb-tax/README.md) |

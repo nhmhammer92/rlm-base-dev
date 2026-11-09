@@ -371,7 +371,7 @@ check("a suite is never run twice — no dedicated check's suite is also in a bu
 CMD_WORDS = {"python", "-m", "pytest", "-q", "check", "--check"}
 # Words admitted only for the one check that declares them, not for CHECKS at large — the
 # scoping the global CMD_WORDS set cannot express.
-PER_CHECK_EXTRA_WORDS = {"plan_readme_consistency": {"--strict"}}
+PER_CHECK_EXTRA_WORDS = {"plan_readme_consistency": {"--strict"}, "data_plan_audit": {"audit"}}
 bad_words = sorted({w for c in pr_gate.CHECKS for w in (c["cmd"] or ())
                     if w not in CMD_WORDS
                     and w not in PER_CHECK_EXTRA_WORDS.get(c["name"], set())
@@ -4770,6 +4770,11 @@ def gate_verdict_all(runner_code, only=None, checks=None):
     try:
         pr_gate.run = lambda cmd: (runner_code, f"stub exit {runner_code}", 0.1)
         pr_gate.run_sequence = lambda cmds: (runner_code, f"stub exit {runner_code}", 0.1)
+        # The drift check reads `git status` on the generated CCI references for its verdict. Left
+        # real, it made "a clean run is still exit 0" fail whenever those files were dirty in the
+        # working tree, e.g. mid-edit before a regeneration is committed: an outcome the stubbed
+        # runners don't control. Stubbed clean, so every check's verdict is `runner_code`'s.
+        pr_gate.git = lambda args, what: ""
         pr_gate.missing_deps = lambda check: []
         pr_gate.unlisted_suites = lambda: []
         pr_gate.CHECKS = keep
@@ -4779,7 +4784,7 @@ def gate_verdict_all(runner_code, only=None, checks=None):
         with redirect_stdout(buf):
             rc = pr_gate.main()
     finally:
-        pr_gate.run, pr_gate.run_sequence = real_run, real_seq
+        pr_gate.run, pr_gate.run_sequence, pr_gate.git = real_run, real_seq, real_git
         pr_gate.changed_files, sys.argv = real_changed, real_argv
         pr_gate.missing_deps, pr_gate.unlisted_suites = real_deps, real_unlisted
         pr_gate.CHECKS = real_checks
@@ -5405,7 +5410,7 @@ if FAILED:
 # fourth wave in a row to correct a hand-maintained figure. Pinned, so raising EXPECTED without
 # updating the sentence that quotes it is a failure rather than a reader's problem.
 README_COUNT = re.compile(r"Verified by `tests/test_pr_gate\.py` \((\d+) checks")
-EXPECTED = 756
+EXPECTED = 762
 _readme_text = pathlib.Path(os.path.join(REPO, "scripts/ai/README.md")).read_text()
 cited = README_COUNT.search(_readme_text)
 check("the check count quoted in scripts/ai/README.md matches EXPECTED, so the prose cannot drift "
@@ -5421,7 +5426,8 @@ check("the check count quoted in scripts/ai/README.md matches EXPECTED, so the p
 _NUM_WORDS = {13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen",
               18: "eighteen", 19: "nineteen", 20: "twenty", 21: "twenty-one", 22: "twenty-two",
               23: "twenty-three", 24: "twenty-four", 25: "twenty-five", 26: "twenty-six",
-              27: "twenty-seven", 28: "twenty-eight", 29: "twenty-nine", 30: "thirty"}
+              27: "twenty-seven", 28: "twenty-eight", 29: "twenty-nine", 30: "thirty",
+              31: "thirty-one", 32: "thirty-two"}
 _actual = len(pr_gate.CHECKS)
 # A word boundary that also rejects a trailing hyphen, so the pattern for a smaller number word
 # does not match inside a hyphenated compound of a larger one: "two of the twenty" must NOT

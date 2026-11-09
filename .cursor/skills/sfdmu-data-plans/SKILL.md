@@ -14,7 +14,7 @@ SFDMU v5.6.4+ is required (5.6.4 fixed Upsert matching for relationship-traversa
 ## Quick Rules
 
 1. externalId delimiter is `;` — NOT `$$` (that's v4).
-2. Relationship-traversal externalId matches under `Upsert` on the 5.6.4+ floor (Bugs 2/3/5 fixed) — the old `Insert` + `deleteOldData: true` workaround is pre-5.6.4. Only Bug 4 (`$$` in lookup reference columns — self-referential *and* cross-object) is still live.
+2. Relationship-traversal externalId matches under `Upsert` on the 5.6.4+ floor (Bugs 2/3/5 fixed) — the old `Insert` + `deleteOldData: true` workaround is pre-5.6.4. Only Bug 4 (a `$$` lookup reference that's self-referential, or doesn't match the parent's `externalId`) is still live.
 3. Never change Upsert → Insert+deleteOldData without explicit user approval.
 4. Empty CSV → set `excluded: true` (prevents destructive wipe). See *Which empty-CSV remedy* — three exist and they are not interchangeable.
 5. Parent → child order in `objects` array (deletion runs reverse).
@@ -28,7 +28,7 @@ SFDMU v5.6.4+ is required (5.6.4 fixed Upsert matching for relationship-traversa
 - **DO NOT** use `$$Field1$Field2` syntax in `externalId` (v4, not v5)
 - **DO NOT** change `Upsert` to `Insert+deleteOldData` without user approval
 - **DO NOT** leave empty CSVs without `excluded: true`
-- **DO NOT** use `$$` composite notation for lookup reference columns in CSVs (Bug 4 — self-referential and cross-object `$$` references fail on import; use simple field references)
+- **DO NOT** use a `$$` lookup reference column that is self-referential or whose parts aren't the parent's `externalId` (Bug 4 — it fails on import; use a simple field reference, or key the parent on exactly those parts)
 - **DO NOT** add `Insert` + `deleteOldData: true` for a relationship-traversal externalId citing Bugs 2/3/5 — those are fixed on the 5.6.4+ floor; `Upsert` matches. (Existing plans that still carry that pattern migrate under the gated `sfdmu-v5-optimization` initiative, not ad hoc.)
 - **DO NOT** re-run a plan into an org with live transactional data to add one record — see below
 
@@ -73,11 +73,11 @@ SFDMU v5.6.4+ is required (5.6.4 fixed Upsert matching for relationship-traversa
 | Empty CSV (no records yet) | mark `excluded: true` | — | Prevents destructive delete-on-load |
 | Another task later rewrites a field (e.g. an overlay resequences), and a rerun must not undo it | `Upsert` + `skipExistingRecords: true` | `false` | Inserts missing rows, never touches matched ones. **Cost:** a correction to *any* field of an existing row no longer lands on rerun (see *Reloading a Plan Into a Live Org*). Don't use `excludedFromUpdateFields` for this: in 5.8.0 the insert payload is cloned from the `fieldsToUpdate` list, so new rows are inserted without the field. On `ProcedurePlanSection` the platform then rejected them ("This sequence already exists"; todo 316) |
 
-## Bug 4 — `$$` Composite Notation Fails for Lookup Reference Columns (self-referential and cross-object)
+## Bug 4 — `$$` Lookup Reference Columns That Don't Match the Parent's Key
 
 **Problem:** When an object has a self-referential lookup (e.g., `ProductComponentGroup.ParentGroupId` → `ProductComponentGroup`) and the CSV uses `$$` composite key notation for that reference (e.g., `ParentGroup.$$Code$ParentProduct.StockKeepingUnit`), SFDMU cannot resolve the parent record. The MissingParentRecordsReport shows anonymized hashes instead of matched records, and the lookup fields are left null after import — even though the parent records exist and SFDMU runs multiple passes.
 
-**Root cause:** SFDMU's `$$` composite notation works for the *primary* record's externalId matching (source↔target), but fails when used as a *lookup reference column* — for **self-referential and cross-object** relationships alike. SFDMU cannot decompose a composite `$$` value back into individual fields to find the referenced record.
+**When it fails, and when it doesn't (verified on built orgs, 2026-11-03).** A cross-object `$$` lookup column resolves when its parts are exactly the parent object's `externalId`, declared in the same pass. qb-pricing's `Pricebook2.$$Name$IsStandard` and `ProductSellingModel.$$Name$SellingModelType`, qb-rates' `RateCardEntry.$$…` (128 RABT, none with a null entry) and qb-billing's `AccountingPeriod.$$Name$FinancialYear` (588 rows, none null) all load. It fails when the reference is **self-referential**, as above, or when the plan keys the parent differently (a `$$` of three parts against a parent keyed on `Name`). `scripts/ai/check_sfdmu_layering.py` flags a populated column in either shape, and lists the known ones in plans no current build loads.
 
 **Fix:** Use simple single-field references for self-referential lookups:
 - Change `ParentGroup.$$Code$ParentProduct.StockKeepingUnit` → `ParentGroup.Code`
@@ -97,7 +97,7 @@ Value:  Cooling,...,Computing
 externalId: "Code"
 ```
 
-**Audit required:** Review all data plans that use `$$` composite columns as *lookup references* (not just primary keys). Cross-object `$$` references (e.g., `ProductComponentGroup.$$Code$...` referenced from `ProductRelatedComponent`) fail the same way as self-references — SFDMU cannot decompose a composite `$$` value in **any** lookup-reference column. **Fix (both cases):** use a simple single-field reference for the lookup column.
+**Fix:** for a self-reference, use a simple single-field reference. For a cross-object reference, either do the same or key the parent on exactly the `$$` parts.
 
 ## v5 Bugs — one live on the 5.6.4 floor, four fixed upstream
 
@@ -126,6 +126,13 @@ case; existing plans still carrying Insert+deleteOldData migrate under the gated
 3. Getting explicit user approval
 
 `deleteOldData: true` deletes every target record matched by the object's own query (all of them when it has no WHERE) before inserting, or the records matched by a per-object `deleteQuery` if one is set (SELECT is forced to `Id`; the WHERE is used verbatim against the target org). Misapplied, it wipes data that Upsert would have safely matched: an unscoped delete on qb-rating stripped every policy from the Active usage resources on a reload of a built org (todo 298), which is why that plan now matches instead of deleting (see *Reload-Safe Status Objects and Child Lookups*).
+
+**Scoping a delete that has to stay (verified, SFDMU 5.8.0, todo 331).** Prefer matching: on the 5.6.4+ floor every remaining delete can be dropped in favour of Upsert matching. If one can't, scope it:
+
+- A `deleteQuery` WHERE can traverse a relationship. `SELECT Id FROM FulfillmentWorkspaceItem WHERE FulfillmentWorkspace.Name IN ('…')` selected only that shape's items on a qb org (run under `--simulation`), where the unscoped delete selected another shape's too. A malformed `deleteQuery` fails at startup.
+- Scope on a **parent's stable key**, never the child's own auto-number `Name`, which changes on every delete-and-reinsert. Keep the IN list in step with the plan's parents: a parent added to the CSV but not to the list is left behind on reload.
+- A scope doesn't get past records the platform won't delete (Active rating records, rows live entitlements reference). Only matching does.
+- **Probe a delete safely with simulation.** `sf sfdmu run … --simulation` runs the delete query and logs `Amount of records to delete: N` (or `No records to delete`) but skips all DML, so it shows what a reload would delete without deleting it. On an org whose My Domain looks like production, pass `--canmodify <instance host>` as `LoadSFDMUData` does, or SFDMU prompts and aborts.
 
 ## Reloading a Plan Into a Live Org
 
@@ -157,6 +164,32 @@ sent to an Active record:
 - **`qb-rating` + `qb-rating-entitlements`**: same pattern (see *Reload-Safe Status
   Objects and Child Lookups* below).
 
+**A load that fails partway can leave children that no reload repairs** (todo 330). When
+SFDMU rejects a parent row, it still inserts the children that look it up, with that lookup
+blank. A later reload matches those children on their key, but it can't set a lookup the
+platform makes **create-only** (createable, not updateable). The child stays wrong until it
+is deleted and inserted again. Optional (nillable) create-only lookups in the qb and q3 plans
+(264 schema):
+
+| Object.field | Plans |
+|---|---|
+| `ProductAttributeDefinition.AttributeCategoryId`, `.OverriddenProductAttributeDefinitionId` | qb-pcm, q3-pcm |
+| `ProductClassificationAttr.AttributeCategoryId` | qb-pcm, q3-pcm |
+| `ProductClassification.ParentProductClassificationId` | qb-pcm, q3-pcm |
+| `ProductRelatedComponent.ChildProductId`, `.ChildProductClassificationId`, `.ParentSellingModelId` | qb-pcm, q3-pcm |
+| `ProductSellingModelOption.ProrationPolicyId` | qb-pcm, q3-pcm |
+| `AttributeDefinition.PicklistId` | qb-pcm, q3-pcm |
+| `Product2.UnitOfMeasureId` | qb-pcm, q3-pcm |
+| `AttributeBasedAdjustment.ProductSellingModelId`; `BundleBasedAdjustment.ProductSellingModelId`, `.ParentProductSellingModelId`, `.RootProductSellingModelId` | qb-pricing, q3-pricing |
+| `GeneralLedgerAcctAsgntRule.LegalEntityId` | qb-accounting, qb-billing |
+
+(Required create-only lookups, such as a master-detail parent, make the child insert fail outright
+instead.) So when a load reports rejected rows, fix the cause, delete the children inserted in
+that run whose create-only lookup is blank where the plan's CSV has a value, and reload. Then check what users see:
+`python scripts/sfdmu_product_view.py capture --target-org <org> --shape <qb|q3> --out <file>` reads
+the configurator's view (PCM `/connect/pcm/products/bulk`) and list prices. `compare <baseline>
+<candidate>` diffs it against a single-shape build. Run it after any layered load or rename.
+
 **To add one product to a live org, load it surgically** — insert just the new
 records and their relationships (a throwaway script or anonymous Apex), rather than
 re-running the plan. Then:
@@ -169,6 +202,10 @@ re-running the plan. Then:
 
 ## Reload-Safe Status Objects and Child Lookups (qb-rating pattern)
 
+The design behind this pattern (shape ownership, how to add a data shape, the remaining destructive
+operations and their guardrails) is in
+[docs/analysis/sfdmu-data-shape-layering.md](../../../docs/analysis/sfdmu-data-shape-layering.md).
+
 Rating records (and many other RLM design-time objects) can't be deleted while Active, and a
 `Status` sent on update either fails (`ProductUsageResource` rejects Active -> Draft) or silently
 demotes the record (`ProductUsageGrant`). `qb-rating` and `qb-rating-entitlements` show the
@@ -176,8 +213,9 @@ pattern that reloads a built org with no deletes and no status changes (live-ver
 
 1. **Two passes per status object.** Pass 1: `Upsert` + `skipExistingRecords: true` with the full
    CSV (Status = Draft), which inserts missing rows and never touches existing ones. Pass 2: `Update` with
-   `Status` removed from the query and from `objectset_source/object-set-2/<Object>.csv`, so
-   corrections to every other field still land. Activation stays in Apex. Don't use
+   `Status` removed from the query and from `objectset_source/object-set-2/<Object>.csv`, so a
+   correction to another field can land, unless the platform locks that field on an Active
+   record (see below). Activation stays in Apex. Don't use
    `excludedFromUpdateFields: ["Status"]` instead: in 5.8.0 it strips the field from inserts too,
    and Status is required on insert.
 2. **Declare every lookup's parent in each pass**, even if only as `Readonly` with no CSV. An
@@ -193,9 +231,10 @@ pattern that reloads a built org with no deletes and no status changes (live-ver
    never carry Ids. The parent is declared `Readonly`, `externalId: Id`, with one field besides
    `Id` (an Id-only Readonly object is dropped: "Only Id remains").
 
-The platform still locks some fields on Active records (e.g. `ProductUsageResource.EffectiveEndDate`
-while its grant is Active). Pass 2 then fails the load with the platform's message; it never skips
-the row silently.
+The platform still locks some fields on Active records: `ProductUsageResource.EffectiveEndDate`
+while its grant is Active, `UsageResource` fields tied to active rate card entries or grants, every field
+but Status on an Active `RateCardEntry`, and an RABT under one. Pass 2 then fails the load with the
+platform's message; it never skips the row silently.
 
 ## Object Ordering
 
@@ -306,7 +345,8 @@ query has a subquery or a string literal in its `WHERE`. A later pass that re-de
 - [ ] Objects ordered parent → child
 - [ ] `$$` composite key CSV headers match externalId fields exactly
 - [ ] `deleteOldData: true` only where a concrete *current* reason applies + user approval (Bugs 1/2/3/5 are fixed on 5.6.4+ — not justifications)
-- [ ] No `$$` composite notation used for lookup reference columns (Bug 4 — use simple field references instead)
+- [ ] No `$$` lookup reference column that is self-referential or doesn't match the parent's `externalId` (Bug 4; `check_sfdmu_layering.py`)
+- [ ] A field another plan of the same shape also writes carries the same value in both plans, or a reload of one alone changes it (`check_sfdmu_layering.py` → `intra:`; todo 337)
 - [ ] Self-referential lookups use simple field references (e.g., `ParentGroup.Code` not `ParentGroup.$$Code$...`)
 - [ ] All-traversal externalIds use `Upsert` on the 5.6.4+ floor (Bugs 3/5 fixed); any residual `Insert` + `deleteOldData: true` is a pre-5.6.4 plan awaiting the gated `sfdmu-v5-optimization` migration
 
@@ -435,6 +475,14 @@ python scripts/validate_sfdmu_v5_datasets.py --fix-all --dry-run       # preview
 python scripts/validate_sfdmu_v5_datasets.py --fix-all                 # apply fixes
 ```
 
+After a layered or partly failed load, check the product view as well (read-only; see *Reloading a Plan
+Into a Live Org*):
+
+```bash
+python scripts/sfdmu_product_view.py capture --target-org <sf_alias> --shape q3 --out q3-view.json
+python scripts/sfdmu_product_view.py compare baseline.json q3-view.json   # exit 1 on any difference
+```
+
 The validator checks the **plan** (export.json/CSV v5 compliance). To check that the
 plan's **README** still matches the plan after you edit objects/CSVs (record counts,
 operations, externalIds, phantom/missing objects), run the consistency checker — it
@@ -445,6 +493,16 @@ missing-object rows are WARN-level and exit 0:
 ```bash
 python scripts/ai/check_plan_readme_consistency.py --strict                                  # all plans
 python scripts/ai/check_plan_readme_consistency.py --strict datasets/sfdmu/qb/en-US/qb-pricing  # one plan
+```
+
+To check a plan against the **release** (fields it selects that the release doesn't have, values a
+restricted picklist won't take, required fields it leaves out), run the release audit. `pr_gate`
+runs it offline against the committed describe snapshot; at the start of a release, capture a new
+snapshot and triage (runbook: `.cursor/skills/schema-validation/release-data-plan-audit.md`):
+
+```bash
+python scripts/audit_data_plans.py audit                              # committed snapshot, all plans
+python scripts/audit_data_plans.py audit --target-org <sf_alias> --plans qb/en-US   # live describe
 ```
 
 ## Additional References

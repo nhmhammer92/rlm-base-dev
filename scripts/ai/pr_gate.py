@@ -450,6 +450,8 @@ CHECKS = [
                   "datasets/sfdmu/qb/en-US/qb-pricing/",
                   # The export.json byte-restore cases load q3-rates in place (todo 319).
                   "datasets/sfdmu/q3/en-US/q3-rates/",
+                  # TestSFDMUIdempotency's AssignedTo placeholder case copies qb-dro (todo 329).
+                  "datasets/sfdmu/qb/en-US/qb-dro/",
                   "tests/test_sfdmu_id_lookup_wiring.py"],
         deps=["cumulusci"], gating=True,
     ),
@@ -639,6 +641,25 @@ CHECKS = [
         deps=[], gating=True,
     ),
     dict(
+        name="sfdmu_layering",
+        cmd=["python", "scripts/ai/check_sfdmu_layering.py"],
+        # Cross-plan, so any plan's data can change what it finds: a `$$` lookup that can't
+        # resolve, or a record two shapes write with different values (todo 325).
+        triggers=["datasets/sfdmu/", "scripts/ai/check_sfdmu_layering.py", "scripts/sfdmu_export.py"],
+        deps=[], gating=True,
+    ),
+    dict(
+        name="data_plan_audit",
+        cmd=["python", "scripts/audit_data_plans.py", "audit"],
+        # Offline: the plans against the active release's committed describe snapshot (todo 321).
+        # A plan change can select a field the release doesn't have or a value a restricted
+        # picklist won't take; the manifest names the active release, so a release bump selects it.
+        triggers=["datasets/sfdmu/", "scripts/audit_data_plans.py",
+                  "scripts/ai/check_sfdmu_layering.py", "scripts/sfdmu_export.py",
+                  "scripts/erd/schema_diff/", ".claude/skill-manifest.yml"],
+        deps=[], gating=True,
+    ),
+    dict(
         # Two pytest-style suites (test_ functions, no __main__) that `python tests/<name>.py`
         # would exit 0 on without running — the silent-green trap. Invoked through pytest for
         # that reason. test_billing_portal_config asserts prepare_billing_portal's step gating
@@ -696,6 +717,9 @@ STDLIB_SUITES = [
     "tests/test_check_node_ca.py",
     "tests/test_check_permission_set_dependencies.py",
     "tests/test_check_release_refs.py",
+    "tests/test_audit_data_plans.py",
+    "tests/test_check_sfdmu_layering.py",
+    "tests/test_sfdmu_product_view.py",
     "tests/test_claude_hooks.py",
     "tests/test_context_apply.py",
     "tests/test_context_delete.py",
